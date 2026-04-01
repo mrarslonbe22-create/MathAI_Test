@@ -1,23 +1,39 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// ============= RESULTS.JSON FAYL =============
+// Gemini AI sozlamalari
+let genAI = null;
+let useMock = true;
+
+try {
+    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.length > 10) {
+        const { GoogleGenerativeAI } = require("@google/generative-ai");
+        genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        useMock = false;
+        console.log('✅ Gemini AI ulandi');
+    } else {
+        console.log('⚠️ API key yo\'q, demo rejimda ishlaydi');
+    }
+} catch (error) {
+    console.log('⚠️ Gemini ulashda xato:', error.message);
+}
+
+// ============= RESULTS.JSON =============
 const resultsFile = path.join(__dirname, 'results.json');
 
-// Natijalarni o'qish
 function loadResults() {
     try {
         if (fs.existsSync(resultsFile)) {
@@ -30,7 +46,6 @@ function loadResults() {
     return [];
 }
 
-// Natijalarni saqlash
 function saveResults(results) {
     try {
         fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
@@ -40,55 +55,30 @@ function saveResults(results) {
     }
 }
 
-// Gemini sozlamalari (agar API key bo'lmasa ishlamaydi)
-let genAI = null;
-try {
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'AIzaSyD7KJk9xP2mR4vL8nQ3wE6rT5yU1iOpL9') {
-        genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        console.log('✅ Gemini AI ulandi');
-    } else {
-        console.log('⚠️ API key yo\'q, AI funksiyalari ishlamaydi');
-    }
-} catch (error) {
-    console.log('⚠️ Gemini paketi yuklanmadi');
-}
-
 // ============= API 1: AI MASLAHAT =============
 app.post('/api/advice', async (req, res) => {
     try {
         const { weakTopics, score } = req.body;
         
-        // Agar Gemini ishlamasa, demo javob
-        if (!genAI) {
+        if (useMock || !genAI) {
             let advice = "📚 O'qishni davom ettiring! ";
             if (weakTopics && weakTopics.length > 0) {
-                advice += `Zaif mavzularingiz: ${weakTopics.join(', ')}. Ushbu mavzularni qayta takrorlang.`;
+                advice += `Zaif mavzularingiz: ${weakTopics.join(', ')}. Ushbu mavzularni qayta takrorlang va ko'proq misollar yeching.`;
             } else {
-                advice += `Siz ${score}/5 ball to'pladingiz. Yaxshi natija!`;
+                advice += `Siz ${score}/5 ball to'pladingiz. Yaxshi natija! Davom eting.`;
             }
             return res.json({ success: true, advice });
         }
         
         const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        
-        const prompt = `
-            O'quvchi matematika testida ${score} ball oldi.
-            Zaif mavzulari: ${weakTopics.join(', ') || "Hech qanday zaif mavzu yo'q"}.
-            
-            Shu natijalarga asoslanib, o'quvchiga qisqa va foydali maslahat bering.
-            Faqat 3-4 gap yozing. O'zbek tilida javob bering.
-        `;
-        
+        const prompt = `O'quvchi matematika testida ${score}/5 ball oldi. Zaif mavzulari: ${weakTopics?.join(', ') || "Yo'q"}. Qisqa va foydali maslahat bering. O'zbek tilida javob bering.`;
         const result = await model.generateContent(prompt);
         const advice = result.response.text();
         
         res.json({ success: true, advice });
     } catch (error) {
-        console.error('Xato:', error);
-        res.json({ 
-            success: true, 
-            advice: "📚 Zaif mavzularingizni aniqlang va ularni qayta takrorlang. Har kuni 15-20 daqiqa matematika bilan shug'ullaning!" 
-        });
+        console.error('AI xato:', error);
+        res.json({ success: true, advice: "📚 Zaif mavzularingizni aniqlang va ularni qayta takrorlang. Har kuni 15-20 daqiqa matematika bilan shug'ullaning!" });
     }
 });
 
@@ -101,34 +91,22 @@ app.post('/api/ask', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Savol kiritilmagan' });
         }
         
-        // Agar Gemini ishlamasa, demo javob
-        if (!genAI) {
+        if (useMock || !genAI) {
             return res.json({ 
                 success: true, 
-                answer: "💡 Bu savolga hozircha javob bera olmayman. Iltimos, API key ni sozlang." 
+                answer: "💡 Bu savolga hozircha javob bera olmayman. Iltimos, API key ni sozlang yoki keyinroq qayta urinib ko'ring." 
             });
         }
         
         const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        
-        const prompt = `
-            Siz matematika o'qituvchisisiz. Quyidagi savolga aniq va tushunarli javob bering:
-            
-            Savol: ${question}
-            
-            Javobingizni o'zbek tilida yozing.
-        `;
-        
+        const prompt = `Siz matematika o'qituvchisisiz. Savol: ${question}. Aniq va tushunarli javob bering. O'zbek tilida.`;
         const result = await model.generateContent(prompt);
         const answer = result.response.text();
         
         res.json({ success: true, answer });
     } catch (error) {
-        console.error('Xato:', error);
-        res.json({ 
-            success: true, 
-            answer: "💡 Kechirasiz, hozircha javob bera olmayapman. Iltimos, keyinroq qayta urinib ko'ring." 
-        });
+        console.error('AI xato:', error);
+        res.json({ success: true, answer: "💡 Kechirasiz, hozircha javob bera olmayapman. Iltimos, keyinroq qayta urinib ko'ring." });
     }
 });
 
@@ -180,13 +158,15 @@ app.get('/', (req, res) => {
 });
 
 // ============= SERVERNI ISHGA TUSHIRISH =============
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
     console.log(`
     ════════════════════════════════════════════
     🚀 MathAI Server ishga tushdi!
     📡 Port: ${PORT}
-    🤖 AI: ${genAI ? 'Gemini AI ulangan' : 'Demo rejim (AI yo\'q)'}
+    🤖 AI: ${useMock ? 'Demo rejim (AI yo\'q)' : 'Gemini AI ulangan'}
     📁 Admin: /admin.html
     ════════════════════════════════════════════
     `);
 });
+
+module.exports = app;
