@@ -1,7 +1,7 @@
 {
-  "name": "math-ai-backend",
+  "name": "math-ai",
   "version": "1.0.0",
-  "description": "Math test AI with Gemini",
+  "description": "MathAI - Sun'iy intellekt yordamida matematikani o'rganish",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
