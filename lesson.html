@@ -2,75 +2,221 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <title>Dars sahifasi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MathAI - Dars</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .lesson-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 20px;
+    }
+    
+    .lesson-content {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 15px;
+      margin: 20px 0;
+    }
+    
+    .lesson-content h3 {
+      color: #667eea;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    
+    .lesson-content p {
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+    
+    .formula {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 18px;
+      text-align: center;
+      margin: 10px 0;
+    }
+    
+    .btn-back {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      font-size: 16px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      display: block;
+      margin: 0 auto;
+    }
+    
+    .btn-back:hover {
+      transform: translateY(-2px);
+    }
+    
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin: 15px 0;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
+<div class="lesson-container">
   <h1 id="title"></h1>
-  <div id="content"></div>
+  <div id="content" class="lesson-content"></div>
   <br>
-  <button onclick="goBack()">⬅ Orqaga</button>
+  <button class="btn-back" onclick="goBack()">⬅ Orqaga qaytish</button>
 </div>
 
 <script>
 const topic = localStorage.getItem("topic");
 
 const lessons = {
-  daraja: {
-    title: "Daraja",
+  "qo'shish": {
+    title: "➕ Qo'shish",
     content: `
-    <h3>Formulalar:</h3>
-    <p>aⁿ × aᵐ = aⁿ⁺ᵐ</p>
-    <p>(aⁿ)ᵐ = aⁿᵐ</p>
-    <p>a⁰ = 1</p>
-    <p>a⁻ⁿ = 1/aⁿ</p>
-    <p>(ab)ⁿ = aⁿbⁿ</p>
-    <p>a² = a × a</p>
-    <p>a³ = a × a × a</p>
-
-    <h3>Nazariya:</h3>
-    <p>Daraja — sonni o‘ziga ko‘paytirishdir.</p>
-
-    <img src="https://upload.wikimedia.org/wikipedia/commons/8/8c/Parabola.svg" width="250">
+      <h3>📖 Qo'shish nima?</h3>
+      <p>Qo'shish - bu ikki yoki undan ortiq sonlarni bir joyga yig'ish amalidir.</p>
+      
+      <div class="formula">a + b = c</div>
+      
+      <h3>📝 Misollar:</h3>
+      <p>5 + 3 = 8</p>
+      <p>12 + 7 = 19</p>
+      <p>25 + 15 = 40</p>
+      
+      <h3>💡 Qoida:</h3>
+      <p>Sonlarni qo'shganda, ularning joyi almashtirilsa ham natija o'zgarmaydi: a + b = b + a</p>
+    `
+  },
+  
+  "ko'paytirish": {
+    title: "✖️ Ko'paytirish",
+    content: `
+      <h3>📖 Ko'paytirish nima?</h3>
+      <p>Ko'paytirish - bu bir xil sonlarni qo'shishning qisqa usuli.</p>
+      
+      <div class="formula">a × b = c</div>
+      
+      <h3>📝 Misollar:</h3>
+      <p>3 × 4 = 12 (3 + 3 + 3 + 3 = 12)</p>
+      <p>5 × 6 = 30</p>
+      <p>7 × 8 = 56</p>
+      
+      <h3>💡 Ko'paytirish jadvali:</h3>
+      <p>2 × 2 = 4 | 3 × 3 = 9 | 4 × 4 = 16</p>
+      <p>5 × 5 = 25 | 6 × 6 = 36 | 7 × 7 = 49</p>
+      <p>8 × 8 = 64 | 9 × 9 = 81</p>
+    `
+  },
+  
+  "asosiy amallar": {
+    title: "➕ Asosiy amallar",
+    content: `
+      <h3>📖 Asosiy matematik amallar:</h3>
+      
+      <div class="formula">Qo'shish: a + b</div>
+      <div class="formula">Ayirish: a - b</div>
+      <div class="formula">Ko'paytirish: a × b</div>
+      <div class="formula">Bo'lish: a ÷ b</div>
+      
+      <h3>📝 Misollar:</h3>
+      <p>15 + 7 = 22</p>
+      <p>20 - 5 = 15</p>
+      <p>6 × 4 = 24</p>
+      <p>18 ÷ 3 = 6</p>
+    `
+  },
+  
+  "daraja": {
+    title: "🔢 Daraja",
+    content: `
+      <h3>📖 Daraja nima?</h3>
+      <p>Daraja - sonni o'ziga bir necha marta ko'paytirish.</p>
+      
+      <div class="formula">aⁿ = a × a × a × ... (n marta)</div>
+      
+      <h3>📝 Misollar:</h3>
+      <p>2³ = 2 × 2 × 2 = 8</p>
+      <p>3² = 3 × 3 = 9</p>
+      <p>4² = 16, 5² = 25, 6² = 36</p>
+      
+      <h3>💡 Formulalar:</h3>
+      <p>aⁿ × aᵐ = aⁿ⁺ᵐ</p>
+      <p>(aⁿ)ᵐ = aⁿᵐ</p>
+      <p>a⁰ = 1</p>
+      <p>a⁻ⁿ = 1/aⁿ</p>
     `
   },
 
-  ildiz: {
-    title: "Ildiz",
+  "ildiz": {
+    title: "√ Ildiz",
     content: `
-    <h3>Formulalar:</h3>
-    <p>√a × √b = √ab</p>
-    <p>√(a²) = a</p>
-    <p>√(a/b) = √a / √b</p>
-    <p>(√a)² = a</p>
-
-    <h3>Nazariya:</h3>
-    <p>Ildiz — darajaning teskari amali.</p>
+      <h3>📖 Ildiz nima?</h3>
+      <p>Ildiz - darajaning teskari amali. Kvadrat ildiz - qaysi sonni o'ziga ko'paytirsak berilgan son hosil bo'ladi.</p>
+      
+      <div class="formula">√a = b  →  b² = a</div>
+      
+      <h3>📝 Misollar:</h3>
+      <p>√4 = 2 (chunki 2 × 2 = 4)</p>
+      <p>√9 = 3 (3 × 3 = 9)</p>
+      <p>√16 = 4, √25 = 5, √36 = 6</p>
+      
+      <h3>💡 Formulalar:</h3>
+      <p>√a × √b = √(a × b)</p>
+      <p>√(a²) = a</p>
+      <p>√(a/b) = √a / √b</p>
     `
   },
 
-  trigonometriya: {
-    title: "Trigonometriya",
+  "trigonometriya": {
+    title: "📐 Trigonometriya",
     content: `
-    <h3>Formulalar:</h3>
-    <p>sin²x + cos²x = 1</p>
-    <p>tan x = sin x / cos x</p>
-    <p>ctg x = cos x / sin x</p>
-
-    <h3>Nazariya:</h3>
-    <p>Trigonometrik funksiyalar burchaklar bilan ishlaydi.</p>
-
-    <img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Sine_cosine_one_period.svg" width="300">
+      <h3>📖 Trigonometriya nima?</h3>
+      <p>Trigonometriya - uchburchak burchaklari va tomonlari orasidagi munosabatlarni o'rganadi.</p>
+      
+      <div class="formula">sin²x + cos²x = 1</div>
+      <div class="formula">tan x = sin x / cos x</div>
+      <div class="formula">ctg x = cos x / sin x</div>
+      
+      <h3>📝 Asosiy qiymatlar:</h3>
+      <p>sin 0° = 0, sin 30° = 0.5, sin 45° = √2/2, sin 60° = √3/2, sin 90° = 1</p>
+      <p>cos 0° = 1, cos 30° = √3/2, cos 45° = √2/2, cos 60° = 0.5, cos 90° = 0</p>
+      
+      <h3>💡 Qo'llanilishi:</h3>
+      <p>Fizika, muhandislik, arxitektura va kompyuter grafikasida keng qo'llaniladi.</p>
     `
   }
 };
 
-document.getElementById("title").innerText = lessons[topic].title;
-document.getElementById("content").innerHTML = lessons[topic].content;
+// Mavzu borligini tekshirish
+if (lessons[topic]) {
+  document.getElementById("title").innerText = lessons[topic].title;
+  document.getElementById("content").innerHTML = lessons[topic].content;
+} else {
+  // Agar mavzu topilmasa
+  document.getElementById("title").innerText = "📚 Mavzu topilmadi";
+  document.getElementById("content").innerHTML = `
+    <p style="text-align: center;">Kechirasiz, bu mavzu bo'yicha ma'lumot hali qo'shilmagan.</p>
+    <p style="text-align: center;">Tez orada qo'shiladi!</p>
+  `;
+}
 
-function goBack(){
+function goBack() {
   window.location.href = "index.html";
 }
 </script>
