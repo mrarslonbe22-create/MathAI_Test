@@ -14,8 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // Static fayllar - MUHIM!
-app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(express.static(__dirname));app.use(express.static(__dirname));
 // Gemini AI sozlamalari
 let genAI = null;
 let useMock = true;
