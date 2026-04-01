@@ -1,0 +1,101 @@
+/* RESET */
+body {
+  margin: 0;
+  font-family: 'Poppins', Arial, sans-serif;
+  background: linear-gradient(135deg, #1e1e2f, #3a3a5a);
+  color: white;
+  text-align: center;
+}
+
+/* CONTAINER */
+.container {
+  background: rgba(255,255,255,0.08);
+  padding: 25px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  width: 90%;
+  max-width: 500px;
+  margin: 40px auto;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+/* INPUT */
+input {
+  padding: 10px;
+  width: 85%;
+  margin: 10px 0;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+}
+
+/* BUTTON */
+button {
+  padding: 10px 20px;
+  margin: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #4CAF50;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #45a049;
+  transform: scale(1.05);
+}
+
+/* RESULT & LESSON CARDS */
+.result-card,
+.lesson-card {
+  background: rgba(0,0,0,0.3);
+  padding: 15px;
+  margin-top: 15px;
+  border-radius: 10px;
+}
+
+/* TABLE (ADMIN) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  color: black;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+th {
+  background: #4CAF50;
+  color: white;
+}
+
+/* TIMER */
+#timer {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+/* QUESTIONS */
+label {
+  display: block;
+  margin-top: 10px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .container {
+    width: 95%;
+    padding: 15px;
+  }
+
+  input, button {
+    width: 100%;
+  }
+}

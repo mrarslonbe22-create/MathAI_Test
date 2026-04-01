@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>Dars sahifasi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <h1 id="title"></h1>
+  <div id="content"></div>
+  <br>
+  <button onclick="goBack()">⬅ Orqaga</button>
+</div>
+
+<script>
+const topic = localStorage.getItem("topic");
+
+const lessons = {
+  daraja: {
+    title: "Daraja",
+    content: `
+    <h3>Formulalar:</h3>
+    <p>aⁿ × aᵐ = aⁿ⁺ᵐ</p>
+    <p>(aⁿ)ᵐ = aⁿᵐ</p>
+    <p>a⁰ = 1</p>
+    <p>a⁻ⁿ = 1/aⁿ</p>
+    <p>(ab)ⁿ = aⁿbⁿ</p>
+    <p>a² = a × a</p>
+    <p>a³ = a × a × a</p>
+
+    <h3>Nazariya:</h3>
+    <p>Daraja — sonni o‘ziga ko‘paytirishdir.</p>
+
+    <img src="https://upload.wikimedia.org/wikipedia/commons/8/8c/Parabola.svg" width="250">
+    `
+  },
+
+  ildiz: {
+    title: "Ildiz",
+    content: `
+    <h3>Formulalar:</h3>
+    <p>√a × √b = √ab</p>
+    <p>√(a²) = a</p>
+    <p>√(a/b) = √a / √b</p>
+    <p>(√a)² = a</p>
+
+    <h3>Nazariya:</h3>
+    <p>Ildiz — darajaning teskari amali.</p>
+    `
+  },
+
+  trigonometriya: {
+    title: "Trigonometriya",
+    content: `
+    <h3>Formulalar:</h3>
+    <p>sin²x + cos²x = 1</p>
+    <p>tan x = sin x / cos x</p>
+    <p>ctg x = cos x / sin x</p>
+
+    <h3>Nazariya:</h3>
+    <p>Trigonometrik funksiyalar burchaklar bilan ishlaydi.</p>
+
+    <img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Sine_cosine_one_period.svg" width="300">
+    `
+  }
+};
+
+document.getElementById("title").innerText = lessons[topic].title;
+document.getElementById("content").innerHTML = lessons[topic].content;
+
+function goBack(){
+  window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

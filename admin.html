@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | MathAI</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 30px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .stats {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .stats p {
+      margin: 5px 0;
+      font-size: 18px;
+    }
+    
+    .btn-clear {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      font-size: 16px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .btn-clear:hover {
+      transform: translateY(-2px);
+    }
+    
+    .empty-data {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-size: 18px;
+    }
+    
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      background: #667eea;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-container">
+  <h1>📊 Admin Panel - Test Natijalari</h1>
+  
+  <div class="stats" id="stats">
+    <p>📈 Jami test topshirganlar: <strong id="totalCount">0</strong></p>
+    <p>⭐ O'rtacha ball: <strong id="avgScore">0</strong>/5</p>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Ism Familiya</th>
+        <th>Ball</th>
+        <th>Vaqt</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <div id="emptyMessage" style="display:none;" class="empty-data">
+    📭 Hozircha hech qanday natija yo'q
+  </div>
+
+  <button class="btn-clear" onclick="clearData()">🗑 Barcha natijalarni tozalash</button>
+  <br>
+  <a href="/" class="back-btn">🏠 Bosh sahifaga qaytish</a>
+</div>
+
+<script>
+// Ma'lumotlarni o'qish
+let data = JSON.parse(localStorage.getItem("results")) || [];
+
+function displayResults() {
+  let html = "";
+  
+  if (data.length === 0) {
+    document.getElementById("emptyMessage").style.display = "block";
+    document.getElementById("tableBody").innerHTML = "";
+    document.getElementById("totalCount").innerText = "0";
+    document.getElementById("avgScore").innerText = "0";
+    return;
+  }
+  
+  document.getElementById("emptyMessage").style.display = "none";
+  // Admin panel uchun (serverdan ma'lumot olish)
+async function loadResultsFromServer() {
+  try {
+    const response = await fetch('http://localhost:3000/api/get-results');
+    const data = await response.json();
+    
+    if (data.success) {
+      displayResults(data.data);
+    }
+  } catch (error) {
+    console.log('Serverga ulanish mumkin emas, localStorage dan o\'qiladi');
+    // Agar server ishlamasa, localStorage dan o'qish
+    let localData = JSON.parse(localStorage.getItem("results")) || [];
+    displayResults(localData);
+  }
+}
+
+function displayResults(data) {
+  let html = "";
+  
+  if (data.length === 0) {
+    document.getElementById("emptyMessage").style.display = "block";
+    document.getElementById("tableBody").innerHTML = "";
+    document.getElementById("totalCount").innerText = "0";
+    document.getElementById("avgScore").innerText = "0";
+    return;
+  }
+  
+  document.getElementById("emptyMessage").style.display = "none";
+  
+  let totalScore = 0;
+  data.forEach((d, index) => {
+    totalScore += d.score;
+    html += `
+      <tr>
+        <td>${index + 1}</td>
+        <td><strong>${d.name}</strong></td>
+        <td>${d.score}/5</td>
+        <td>${d.date}</td>
+      </tr>
+    `;
+  });
+  
+  let avgScore = (totalScore / data.length).toFixed(2);
+  
+  document.getElementById("tableBody").innerHTML = html;
+  document.getElementById("totalCount").innerText = data.length;
+  document.getElementById("avgScore").innerText = avgScore;
+}
+
+// Sahifa yuklanganda
+loadResultsFromServer();
+
+// Tozalash funksiyasi
+async function clearData() {
+  if (confirm("Haqiqatan ham barcha natijalarni o'chirmoqchimisiz?")) {
+    try {
+      await fetch('http://localhost:3000/api/clear-results', { method: 'DELETE' });
+      localStorage.removeItem("results");
+      localStorage.removeItem("userData");
+      loadResultsFromServer();
+      alert("✅ Barcha natijalar o'chirildi!");
+    } catch (error) {
+      // Agar server ishlamasa, faqat localStorage dan o'chirish
+      localStorage.removeItem("results");
+      localStorage.removeItem("userData");
+      loadResultsFromServer();
+      alert("✅ Barcha natijalar o'chirildi!");
+    }
+  }
+}
+  // Statistikani hisoblash
+  let totalScore = 0;
+  data.forEach((d, index) => {
+    totalScore += d.score;
+    html += `
+      <tr>
+        <td>${index + 1}</td>
+        <td><strong>${d.name}</strong></td>
+        <td>${d.score}/5</td>
+        <td>${d.date}</td>
+      </tr>
+    `;
+  });
+  
+  let avgScore = (totalScore / data.length).toFixed(2);
+  
+  document.getElementById("tableBody").innerHTML = html;
+  document.getElementById("totalCount").innerText = data.length;
+  document.getElementById("avgScore").innerText = avgScore;
+}
+
+// Ma'lumotlarni tozalash
+function clearData() {
+  if (confirm("Haqiqatan ham barcha natijalarni o'chirmoqchimisiz?")) {
+    localStorage.removeItem("results");
+    localStorage.removeItem("userData");
+    data = [];
+    displayResults();
+    alert("✅ Barcha natijalar o'chirildi!");
+  }
+}
+
+// Sahifa yuklanganda ko'rsatish
+displayResults();
+</script>
+
+</body>
+</html>

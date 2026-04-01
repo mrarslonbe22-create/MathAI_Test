@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>MathAI Test</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>MathAI Test</h1>
+
+  <!-- Bosh sahifa -->
+  <div id="start-section">
+    <p>Ismingizni kiriting:</p>
+    <input type="text" id="firstName" placeholder="Ism">
+    <p>Familiyangizni kiriting:</p>
+    <input type="text" id="lastName" placeholder="Familiya">
+    <br>
+    <button onclick="startTest()">Boshlash</button>
+  </div>
+
+  <!-- Test sahifasi -->
+  <div id="test-section" style="display:none;">
+    
+    <!-- TIMER -->
+    <h3 id="timer">Vaqt: 60</h3>
+
+    <div class="question">
+      <p>1) 5 + 7 = ?</p>
+      <input type="number" id="q1" placeholder="Javob">
+    </div>
+    <div class="question">
+      <p>2) 12 * 3 = ?</p>
+      <input type="number" id="q2" placeholder="Javob">
+    </div>
+    <div class="question">
+      <p>3) 15 ÷ 3 = ?</p>
+      <input type="number" id="q3" placeholder="Javob">
+    </div>
+    <div class="question">
+      <p>4) 9 - 4 = ?</p>
+      <input type="number" id="q4" placeholder="Javob">
+    </div>
+    <div class="question">
+      <p>5) 7² = ?</p>
+      <input type="number" id="q5" placeholder="Javob">
+    </div>
+
+    <button onclick="checkTest()">Natijani Tekshirish</button>
+
+    <div id="progress">
+      <div id="progress-bar">0%</div>
+    </div>
+  </div>
+
+  <!-- Natija sahifasi -->
+  <div id="result-section" style="display:none;">
+    <h2 id="greeting"></h2>
+    <p id="score"></p>
+    <p id="level"></p>
+    <p class="recommendation" id="recommendation"></p>
+    <button onclick="restartTest()">Qaytadan Boshlash</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
