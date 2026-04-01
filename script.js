@@ -27,28 +27,31 @@ function generateQuestions() {
 
   a = randomInt(5, 20);
   b = randomInt(2, 10);
-  questions.push(`${a} * ${b}`);
+  questions.push(`${a} × ${b}`);
   answers.push(a * b);
 
   a = randomInt(2, 10);
   let power = randomInt(2, 3);
   questions.push(`${a}^${power}`);
-  answers.push(a ** power);
+  answers.push(Math.pow(a, power));
 
   a = randomInt(4, 400);
   questions.push(`√${a}`);
   answers.push(Math.round(Math.sqrt(a)));
 
   let trigFunc = randomTrig();
-  let angle = [0, 30, 45, 60][randomInt(0, 3)];
+  let angles = [0, 30, 45, 60];
+  let angle = angles[randomInt(0, angles.length - 1)];
   let rad = angle * Math.PI / 180;
 
   let trig;
-  if (trigFunc === "sin") trig = Math.sin(rad);
-  if (trigFunc === "cos") trig = Math.cos(rad);
-  if (trigFunc === "tan") trig = Math.tan(rad);
-  if (trigFunc === "cot") trig = 1 / Math.tan(rad);
-
+  switch(trigFunc) {
+    case "sin": trig = Math.sin(rad); break;
+    case "cos": trig = Math.cos(rad); break;
+    case "tan": trig = Math.tan(rad); break;
+    case "cot": trig = 1 / Math.tan(rad); break;
+  }
+  
   questions.push(`${trigFunc}(${angle}°)`);
   answers.push(Math.round(trig * 100) / 100);
 }
@@ -56,9 +59,17 @@ function generateQuestions() {
 // Timer
 function startTimer() {
   timeLeft = 60;
+  const timerElement = document.getElementById("timer");
+  
   timerInterval = setInterval(() => {
-    document.getElementById("timer").innerText = "⏱ " + timeLeft;
+    if (timerElement) {
+      timerElement.innerText = timeLeft;
+    }
     timeLeft--;
+
+    // Progress barni yangilash
+    let progress = ((60 - timeLeft - 1) / 60) * 100;
+    updateProgress(progress);
 
     if (timeLeft < 0) {
       clearInterval(timerInterval);
@@ -67,7 +78,17 @@ function startTimer() {
   }, 1000);
 }
 
-// Start
+// Progress barni yangilash
+function updateProgress(percent) {
+  const progressBar = document.getElementById("progress-bar");
+  if (progressBar) {
+    let p = Math.min(100, Math.max(0, percent));
+    progressBar.style.width = p + "%";
+    progressBar.innerText = Math.round(p) + "%";
+  }
+}
+
+// Testni boshlash
 function startTest() {
   const first = document.getElementById("firstName").value;
   const last = document.getElementById("lastName").value;
@@ -84,18 +105,23 @@ function startTest() {
 
   generateQuestions();
 
+  // Savollarni HTML ga joylashtirish
   for (let i = 1; i <= 5; i++) {
-    let questionSpan = document.getElementById("q" + i).previousElementSibling;
+    const questionSpan = document.getElementById(`q${i}-text`);
     if (questionSpan) {
       questionSpan.innerText = questions[i - 1];
     }
-    document.getElementById("q" + i).value = "";
+    const inputField = document.getElementById(`q${i}`);
+    if (inputField) {
+      inputField.value = "";
+    }
   }
 
+  updateProgress(0);
   startTimer();
 }
 
-// ============= ZAIF MAVZULARNI ANIQLASH (TO'G'RILANGAN) =============
+// Zaif mavzularni aniqlash
 function getWeakTopicsFromTest(wrongTopics) {
   let userData = JSON.parse(localStorage.getItem("userData")) || {};
   
@@ -108,7 +134,6 @@ function getWeakTopicsFromTest(wrongTopics) {
   
   localStorage.setItem("userData", JSON.stringify(userData));
   
-  // Barcha zaif mavzularni qaytarish
   let weak = [];
   for (let topic in userData) {
     if (userData[topic].wrong > (userData[topic].correct || 0)) {
@@ -118,7 +143,7 @@ function getWeakTopicsFromTest(wrongTopics) {
   return weak;
 }
 
-// ============= AI ADVICE (Gemini API orqali) =============
+// ============= AI ADVICE (Vercel uchun tuzatilgan) =============
 async function getAIAdvice(weakTopics, score) {
   const adviceResult = document.getElementById("aiAdvice");
   const adviceBtn = document.getElementById("adviceBtn");
@@ -129,11 +154,12 @@ async function getAIAdvice(weakTopics, score) {
   }
   
   if (adviceResult) {
-    adviceResult.innerHTML = '<p style="color: blue;">🤖 AI dan maslahat olinyapti...</p>';
+    adviceResult.innerHTML = '<p style="color: #667eea;">🤖 AI dan maslahat olinyapti...</p>';
   }
   
   try {
-    const response = await fetch('http://localhost:3000/api/advice', {
+    // MUHIM: localhost emas, relative path!
+    const response = await fetch('/api/advice', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -149,7 +175,7 @@ async function getAIAdvice(weakTopics, score) {
     if (data.success) {
       if (adviceResult) {
         adviceResult.innerHTML = `
-          <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-top: 10px;">
+          <div class="ai-advice-box" style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-top: 10px;">
             <h3>📚 AI Tavsiyasi</h3>
             <p>${data.advice}</p>
           </div>
@@ -165,7 +191,7 @@ async function getAIAdvice(weakTopics, score) {
       adviceResult.innerHTML = `
         <div style="background: #ffebee; padding: 15px; border-radius: 10px; margin-top: 10px; color: red;">
           ❌ Xatolik: ${error.message}<br>
-          ⚠️ Server ishlayotganligini tekshiring: <strong>npm start</strong>
+          ⚠️ Internet ulanishini tekshiring
         </div>
       `;
     }
@@ -177,7 +203,7 @@ async function getAIAdvice(weakTopics, score) {
   }
 }
 
-// ============= AI ASK (Savol-javob) =============
+// ============= AI ASK (Vercel uchun tuzatilgan) =============
 async function askAI() {
   const questionInput = document.getElementById("questionInput");
   const question = questionInput?.value.trim();
@@ -196,11 +222,12 @@ async function askAI() {
   }
   
   if (answerResult) {
-    answerResult.innerHTML = '<p style="color: blue;">🤔 AI javob yozyapti...</p>';
+    answerResult.innerHTML = '<p style="color: #667eea;">🤔 AI javob yozyapti...</p>';
   }
   
   try {
-    const response = await fetch('http://localhost:3000/api/ask', {
+    // MUHIM: localhost emas, relative path!
+    const response = await fetch('/api/ask', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -230,7 +257,7 @@ async function askAI() {
       answerResult.innerHTML = `
         <div style="background: #ffebee; padding: 15px; border-radius: 10px; margin-top: 10px; color: red;">
           ❌ Xatolik: ${error.message}<br>
-          ⚠️ Server ishlayotganligini tekshiring: <strong>npm start</strong>
+          ⚠️ Internet ulanishini tekshiring
         </div>
       `;
     }
@@ -242,7 +269,7 @@ async function askAI() {
   }
 }
 
-// ============= TESTNI TEKSHIRISH (AI QO'SHILGAN) =============
+// ============= TESTNI TEKSHIRISH =============
 async function checkTest() {
   clearInterval(timerInterval);
 
@@ -251,73 +278,108 @@ async function checkTest() {
 
   for (let i = 1; i <= 5; i++) {
     let user = parseFloat(document.getElementById("q" + i).value);
+    let answer = answers[i - 1];
+    
+    if (isNaN(user)) {
+      user = 0;
+    }
 
-    if (Math.abs(user - answers[i - 1]) < 0.1) {
+    if (Math.abs(user - answer) < 0.1) {
       score++;
     } else {
-      // Mavzu nomlarini aniqlash
-      if (i === 1 || i === 2) wrongTopics.push("asosiy amallar");
+      if (i === 1) wrongTopics.push("qo'shish");
+      if (i === 2) wrongTopics.push("ko'paytirish");
       if (i === 3) wrongTopics.push("daraja");
       if (i === 4) wrongTopics.push("ildiz");
       if (i === 5) wrongTopics.push("trigonometriya");
     }
   }
 
-  // Natijalarni saqlash
-  saveResult(userName, score);
+  // Natijalarni saqlash (serverga yuborish)
+  await saveResult(userName, score, wrongTopics);
   
-  // Zaif mavzularni saqlash
   let weakTopics = getWeakTopicsFromTest(wrongTopics);
 
-  // Natijalarni ko'rsatish
-  document.getElementById("greeting").innerText = "Salom " + userName;
-  document.getElementById("score").innerText = "Ball: " + score + "/5";
+  document.getElementById("greeting").innerHTML = `👋 Salom, <strong>${userName}</strong>!`;
+  
+  const scoreElement = document.getElementById("score");
+  if (scoreElement) {
+    scoreElement.innerHTML = `${score}<span style="font-size: 18px;">/5</span>`;
+  }
   
   let recommendationText = wrongTopics.length 
-    ? "📖 O'rganishingiz kerak: " + wrongTopics.join(", ") 
-    : "🎉 A'lo! Barcha savollarga to'g'ri javob berdingiz!";
+    ? `📖 O'rganishingiz kerak bo'lgan mavzular: <strong>${wrongTopics.join(", ")}</strong>` 
+    : "🎉 A'lo! Barcha savollarga to'g'ri javob berdingiz! Tabriklaymiz!";
   
-  document.getElementById("recommendation").innerText = recommendationText;
+  document.getElementById("recommendation").innerHTML = recommendationText;
 
-  // Mavzular bo'yicha tugmalar
-  let html = '<div style="margin-top: 15px;">';
-  wrongTopics.forEach(t => {
-    html += `<button onclick="openLesson('${t}')" style="margin: 5px; padding: 8px 15px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">📘 ${t} ni o'rganish</button>`;
-  });
+  let html = '<div style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">';
+  if (wrongTopics.length > 0) {
+    wrongTopics.forEach(t => {
+      html += `<button onclick="openLesson('${t}')" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer;">📘 ${t} ni o'rganish</button>`;
+    });
+  } else {
+    html += `<button onclick="restartTest()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer;">🎯 Yangi test topshirish</button>`;
+  }
   html += '</div>';
   
   document.getElementById("topicButtons").innerHTML = html;
 
-  // AI maslahat qismini ko'rsatish
-  let aiSection = `
-    <div style="margin-top: 20px; padding: 15px; border-top: 2px solid #ddd;">
-      <button onclick="getAIAdvice(${JSON.stringify(weakTopics)}, ${score})" id="adviceBtn" style="padding: 10px 20px; background: #9C27B0; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+  let aiSectionHtml = `
+    <div style="margin-top: 20px; padding: 15px; border-top: 2px solid #e0e0e0;">
+      <button onclick="getAIAdvice(${JSON.stringify(weakTopics)}, ${score})" id="adviceBtn" style="padding: 12px 25px; background: #9C27B0; color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 16px;">
         🤖 AI dan maslahat olish
       </button>
-      <div id="aiAdvice" style="margin-top: 10px;"></div>
+      <div id="aiAdvice" style="margin-top: 15px;"></div>
     </div>
   `;
   
-  document.getElementById("aiSection").innerHTML = aiSection;
+  const aiSectionElement = document.getElementById("aiSection");
+  if (aiSectionElement) {
+    aiSectionElement.innerHTML = aiSectionHtml;
+  }
 
   document.getElementById("test-section").style.display = "none";
   document.getElementById("result-section").style.display = "block";
 }
 
-// Lesson ochish
 function openLesson(topic) {
   localStorage.setItem("topic", topic);
   window.location.href = "lesson.html";
 }
 
-// Natijalarni saqlash
-function saveResult(name, score) {
+// Natijalarni saqlash (serverga yuborish)
+async function saveResult(name, score, weakTopics) {
+  // LocalStorage ga saqlash
   let data = JSON.parse(localStorage.getItem("results")) || [];
-  data.push({ name, score, date: new Date().toLocaleString() });
+  data.push({ 
+    name, 
+    score, 
+    weakTopics: weakTopics || [],
+    date: new Date().toLocaleString('uz-UZ') 
+  });
   localStorage.setItem("results", JSON.stringify(data));
+  
+  // Serverga saqlash
+  try {
+    await fetch('/api/save-result', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, score, weakTopics: weakTopics || [] })
+    });
+    console.log("✅ Natija serverga saqlandi");
+  } catch (error) {
+    console.log("⚠️ Serverga saqlashda xato, faqat lokal saqlandi");
+  }
 }
 
-// Qayta boshlash
 function restartTest() {
   location.reload();
 }
+
+// Sahifa yuklanganda
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("🧠 MathAI tayyor!");
+});
