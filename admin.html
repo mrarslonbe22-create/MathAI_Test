@@ -4,8 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel | MathAI</title>
-    <link rel="stylesheet" href="style.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
         .admin-container {
             max-width: 1000px;
             margin: 0 auto;
@@ -70,6 +82,11 @@
             transform: translateY(-2px);
         }
         
+        .refresh-btn {
+            background: #4CAF50;
+            margin-left: 10px;
+        }
+        
         .empty-data {
             text-align: center;
             padding: 40px;
@@ -88,9 +105,11 @@
             text-align: center;
         }
         
-        .refresh-btn {
-            background: #4CAF50;
-            margin-left: 10px;
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -104,48 +123,53 @@
         <p>⭐ O'rtacha ball: <strong id="avgScore">0</strong>/5</p>
     </div>
     
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Ism Familiya</th>
-                <th>Ball</th>
-                <th>Vaqt</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Ism Familiya</th>
+                    <th>Ball</th>
+                    <th>Vaqt</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="4" style="text-align: center;">Yuklanmoqda...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
     <div id="emptyMessage" style="display:none;" class="empty-data">
         📭 Hozircha hech qanday natija yo'q
     </div>
 
-    <div style="display: flex; gap: 10px; justify-content: center;">
+    <div class="button-group">
         <button class="btn-clear" onclick="clearData()">🗑 Barcha natijalarni tozalash</button>
         <button class="btn-clear refresh-btn" onclick="loadResults()">🔄 Yangilash</button>
     </div>
     
-    <br>
-    <a href="/" class="back-btn">🏠 Bosh sahifaga qaytish</a>
+    <div style="text-align: center;">
+        <a href="/" class="back-btn">🏠 Bosh sahifaga qaytish</a>
+    </div>
 </div>
 
 <script>
 // Ma'lumotlarni yuklash
 async function loadResults() {
     try {
-        // Serverdan ma'lumot olish
         const response = await fetch('/api/get-results');
         const data = await response.json();
         
         if (data.success && data.data) {
             displayResults(data.data);
         } else {
-            // Agar server ishlamasa, localStorage dan o'qish
             let localData = JSON.parse(localStorage.getItem("results")) || [];
             displayResults(localData);
         }
     } catch (error) {
-        console.log('Serverga ulanishda xato, localStorage dan o\'qiladi');
+        console.log('Serverga ulanishda xato:', error);
         let localData = JSON.parse(localStorage.getItem("results")) || [];
         displayResults(localData);
     }
@@ -154,7 +178,7 @@ async function loadResults() {
 function displayResults(data) {
     let html = "";
     
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
         document.getElementById("emptyMessage").style.display = "block";
         document.getElementById("tableBody").innerHTML = "";
         document.getElementById("totalCount").innerText = "0";
@@ -166,12 +190,12 @@ function displayResults(data) {
     
     let totalScore = 0;
     data.forEach((d, index) => {
-        totalScore += d.score;
+        totalScore += d.score || 0;
         html += `
             <tr>
                 <td>${index + 1}</td>
                 <td><strong>${d.name || 'Noma\'lum'}</strong></td>
-                <td>${d.score}/5</td>
+                <td>${d.score || 0}/5</td>
                 <td>${d.date || 'Noma\'lum'}</td>
             </tr>
         `;
@@ -188,16 +212,12 @@ function displayResults(data) {
 async function clearData() {
     if (confirm("Haqiqatan ham barcha natijalarni o'chirmoqchimisiz?")) {
         try {
-            // Serverdan o'chirish
             await fetch('/api/clear-results', { method: 'DELETE' });
-            // Lokal storage dan o'chirish
             localStorage.removeItem("results");
             localStorage.removeItem("userData");
-            // Qayta yuklash
             loadResults();
             alert("✅ Barcha natijalar o'chirildi!");
         } catch (error) {
-            // Agar server ishlamasa, faqat localStorage dan o'chirish
             localStorage.removeItem("results");
             localStorage.removeItem("userData");
             loadResults();
