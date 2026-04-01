@@ -1,66 +1,107 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8">
-  <title>MathAI Test</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathAI | Sun'iy intellekt yordamida matematikani o'rganing</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>MathAI Test</h1>
+    <div class="container">
+        <header>
+            <h1>🧠 MathAI</h1>
+            <p class="tagline">Sun'iy intellekt yordamida mustaqil ta'limni individuallashtirish</p>
+        </header>
 
-  <!-- Bosh sahifa -->
-  <div id="start-section">
-    <p>Ismingizni kiriting:</p>
-    <input type="text" id="firstName" placeholder="Ism">
-    <p>Familiyangizni kiriting:</p>
-    <input type="text" id="lastName" placeholder="Familiya">
-    <br>
-    <button onclick="startTest()">Boshlash</button>
-  </div>
+        <!-- Bosh sahifa -->
+        <div id="start-section">
+            <div class="card">
+                <h2>👋 Xush kelibsiz!</h2>
+                <p>Ism va familiyangizni kiriting, so'ng testni boshlang</p>
+                
+                <div class="input-group">
+                    <label>Ism</label>
+                    <input type="text" id="firstName" placeholder="Ismingiz">
+                </div>
+                
+                <div class="input-group">
+                    <label>Familiya</label>
+                    <input type="text" id="lastName" placeholder="Familiyangiz">
+                </div>
+                
+                <button class="btn btn-primary" onclick="startTest()">🚀 Testni boshlash</button>
+            </div>
+        </div>
 
-  <!-- Test sahifasi -->
-  <div id="test-section" style="display:none;">
-    
-    <!-- TIMER -->
-    <h3 id="timer">Vaqt: 60</h3>
+        <!-- Test sahifasi -->
+        <div id="test-section" style="display:none;">
+            <div class="timer-card">
+                <span>⏱ Qolgan vaqt</span>
+                <span id="timer" class="timer">60</span>
+                <span>soniya</span>
+            </div>
+            
+            <div class="questions-container">
+                <div class="question-item">
+                    <div class="question-text"><strong>1-savol:</strong> <span id="q1-text"></span></div>
+                    <input type="number" id="q1" class="answer-input" placeholder="Javobingizni yozing">
+                </div>
+                
+                <div class="question-item">
+                    <div class="question-text"><strong>2-savol:</strong> <span id="q2-text"></span></div>
+                    <input type="number" id="q2" class="answer-input" placeholder="Javobingizni yozing">
+                </div>
+                
+                <div class="question-item">
+                    <div class="question-text"><strong>3-savol:</strong> <span id="q3-text"></span></div>
+                    <input type="number" id="q3" class="answer-input" placeholder="Javobingizni yozing">
+                </div>
+                
+                <div class="question-item">
+                    <div class="question-text"><strong>4-savol:</strong> <span id="q4-text"></span></div>
+                    <input type="number" id="q4" class="answer-input" placeholder="Javobingizni yozing">
+                </div>
+                
+                <div class="question-item">
+                    <div class="question-text"><strong>5-savol:</strong> <span id="q5-text"></span></div>
+                    <input type="number" id="q5" class="answer-input" placeholder="Javobingizni yozing">
+                </div>
+            </div>
+            
+            <button class="btn btn-check" onclick="checkTest()">✅ Testni yakunlash</button>
+            
+            <div id="progress">
+                <div id="progress-bar">0%</div>
+            </div>
+        </div>
 
-    <div class="question">
-      <p>1) 5 + 7 = ?</p>
-      <input type="number" id="q1" placeholder="Javob">
+        <!-- Natija sahifasi -->
+        <div id="result-section" style="display:none;">
+            <div class="result-card">
+                <h2 id="greeting"></h2>
+                <div class="score-circle" id="score"></div>
+                <div class="recommendation-box" id="recommendation"></div>
+                <div id="topicButtons"></div>
+                <div id="aiSection"></div>
+                <button class="btn btn-restart" onclick="restartTest()">🔄 Yangi test</button>
+            </div>
+        </div>
+
+        <!-- AI Savol-javob qismi -->
+        <div id="askSection" class="ask-section">
+            <h3>🤖 AI yordamchisiga savol bering</h3>
+            <div class="ask-container">
+                <input type="text" id="questionInput" placeholder="Masalan: Trigonometriya nima? yoki 5x + 3 = 18 tenglamasini yech..." class="ask-input">
+                <button onclick="askAI()" id="askBtn" class="btn btn-ask">❓ Savol berish</button>
+            </div>
+            <div id="answerResult" class="answer-result"></div>
+        </div>
+
+        <footer>
+            <p>🔍 Admin panel: <a href="/admin.html">/admin</a></p>
+        </footer>
     </div>
-    <div class="question">
-      <p>2) 12 * 3 = ?</p>
-      <input type="number" id="q2" placeholder="Javob">
-    </div>
-    <div class="question">
-      <p>3) 15 ÷ 3 = ?</p>
-      <input type="number" id="q3" placeholder="Javob">
-    </div>
-    <div class="question">
-      <p>4) 9 - 4 = ?</p>
-      <input type="number" id="q4" placeholder="Javob">
-    </div>
-    <div class="question">
-      <p>5) 7² = ?</p>
-      <input type="number" id="q5" placeholder="Javob">
-    </div>
 
-    <button onclick="checkTest()">Natijani Tekshirish</button>
-
-    <div id="progress">
-      <div id="progress-bar">0%</div>
-    </div>
-  </div>
-
-  <!-- Natija sahifasi -->
-  <div id="result-section" style="display:none;">
-    <h2 id="greeting"></h2>
-    <p id="score"></p>
-    <p id="level"></p>
-    <p class="recommendation" id="recommendation"></p>
-    <button onclick="restartTest()">Qaytadan Boshlash</button>
-  </div>
-
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
