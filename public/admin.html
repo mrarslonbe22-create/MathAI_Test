@@ -1,1 +1,288 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | MathAI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .admin-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .stats {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .stats p {
+            margin: 5px 0;
+            font-size: 18px;
+        }
+        
+        .btn-clear {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-clear:hover {
+            transform: translateY(-2px);
+        }
+        
+        .refresh-btn {
+            background: #4CAF50;
+            margin-left: 10px;
+        }
+        
+        .empty-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 18px;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <h1>📊 Admin Panel - Test Natijalari</h1>
+    
+    <div class="stats" id="stats">
+        <p>📈 Jami test topshirganlar: <strong id="totalCount">0</strong></p>
+        <p>⭐ O'rtacha ball: <strong id="avgScore">0</strong>/6</p>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Ism Familiya</th>
+                    <th>Ball</th>
+                    <th>Vaqt</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="4" class="loading">⏳ Yuklanmoqda...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="emptyMessage" style="display:none;" class="empty-data">
+        📭 Hozircha hech qanday natija yo'q
+    </div>
+    
+    <div id="errorMessage" style="display:none;" class="error-message">
+        ❌ Ma'lumotlarni yuklashda xatolik yuz berdi
+    </div>
+
+    <div class="button-group">
+        <button class="btn-clear" onclick="clearData()">🗑 Barcha natijalarni tozalash</button>
+        <button class="btn-clear refresh-btn" onclick="loadResults()">🔄 Yangilash</button>
+    </div>
+    
+    <div style="text-align: center;">
+        <a href="/" class="back-btn">🏠 Bosh sahifaga qaytish</a>
+    </div>
+</div>
+
+<script>
+// Ma'lumotlarni yuklash
+async function loadResults() {
+    const tableBody = document.getElementById("tableBody");
+    const emptyMessage = document.getElementById("emptyMessage");
+    const errorMessage = document.getElementById("errorMessage");
+    
+    // Yuklanayotganini ko'rsatish
+    tableBody.innerHTML = '<tr><td colspan="4" class="loading">⏳ Yuklanmoqda...</td></tr>';
+    emptyMessage.style.display = "none";
+    errorMessage.style.display = "none";
+    
+    try {
+        // Serverdan ma'lumot olish
+        const response = await fetch('/api/get-results');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            displayResults(data.data);
+        } else {
+            // Lokal storage dan o'qish
+            let localData = JSON.parse(localStorage.getItem("results")) || [];
+            displayResults(localData);
+        }
+    } catch (error) {
+        console.error('Xato:', error);
+        // Lokal storage dan o'qish
+        try {
+            let localData = JSON.parse(localStorage.getItem("results")) || [];
+            if (localData.length > 0) {
+                displayResults(localData);
+            } else {
+                throw new Error('Hech qanday ma\'lumot yo\'q');
+            }
+        } catch (e) {
+            errorMessage.style.display = "block";
+            tableBody.innerHTML = '<tr><td colspan="4">❌ Server va lokalda ma\'lumot topilmadi</td></tr>';
+        }
+    }
+}
+
+function displayResults(data) {
+    const tableBody = document.getElementById("tableBody");
+    const emptyMessage = document.getElementById("emptyMessage");
+    
+    if (!data || data.length === 0) {
+        emptyMessage.style.display = "block";
+        tableBody.innerHTML = "";
+        document.getElementById("totalCount").innerText = "0";
+        document.getElementById("avgScore").innerText = "0";
+        return;
+    }
+    
+    emptyMessage.style.display = "none";
+    
+    let totalScore = 0;
+    let html = "";
+    
+    data.forEach((d, index) => {
+        let scoreValue = d.score || 0;
+        totalScore += scoreValue;
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td><strong>${d.name || 'Noma\'lum'}</strong></td>
+                <td>${scoreValue}/6</td>
+                <td>${d.date || 'Noma\'lum'}</td>
+            </tr>
+        `;
+    });
+    
+    let avgScore = (totalScore / data.length).toFixed(2);
+    
+    document.getElementById("tableBody").innerHTML = html;
+    document.getElementById("totalCount").innerText = data.length;
+    document.getElementById("avgScore").innerText = avgScore;
+}
+
+// Ma'lumotlarni tozalash
+async function clearData() {
+    if (confirm("Haqiqatan ham barcha natijalarni o'chirmoqchimisiz?")) {
+        try {
+            // Serverdan o'chirish
+            await fetch('/api/clear-results', { method: 'DELETE' });
+            // Lokal storage dan o'chirish
+            localStorage.removeItem("results");
+            localStorage.removeItem("userData");
+            // Qayta yuklash
+            loadResults();
+            alert("✅ Barcha natijalar o'chirildi!");
+        } catch (error) {
+            // Agar server ishlamasa, faqat localStorage dan o'chirish
+            localStorage.removeItem("results");
+            localStorage.removeItem("userData");
+            loadResults();
+            alert("✅ Barcha natijalar o'chirildi!");
+        }
+    }
+}
+
+// Sahifa yuklanganda
+document.addEventListener('DOMContentLoaded', function() {
+    loadResults();
+});
+</script>
+
+</body>
+</html>
 
