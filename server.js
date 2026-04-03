@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Static fayllar - TO'G'RILANGAN!
+// Static fayllar - TO'G'RI
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Gemini AI sozlamalari
@@ -30,7 +30,7 @@ try {
         console.log('⚠️ API key yo\'q, demo rejim');
     }
 } catch (error) {
-    console.log('⚠️ Gemini ulashda xato');
+    console.log('⚠️ Gemini ulashda xato:', error.message);
 }
 
 // ============= API 1: AI MASLAHAT =============
@@ -55,6 +55,7 @@ app.post('/api/advice', async (req, res) => {
         
         res.json({ success: true, advice });
     } catch (error) {
+        console.error('AI xato:', error);
         res.json({ success: true, advice: "📚 Zaif mavzularingizni aniqlang va ularni qayta takrorlang!" });
     }
 });
@@ -71,7 +72,7 @@ app.post('/api/ask', async (req, res) => {
         if (useMock || !genAI) {
             return res.json({ 
                 success: true, 
-                answer: "💡 Bu savolga hozircha javob bera olmayman. API key ni tekshiring." 
+                answer: "💡 Bu savolga javob: Matematikani o'rganish davom ettiring! Savolingizni aniqroq yozib bering." 
             });
         }
         
@@ -82,31 +83,41 @@ app.post('/api/ask', async (req, res) => {
         
         res.json({ success: true, answer });
     } catch (error) {
-        res.json({ success: true, answer: "💡 Kechirasiz, hozircha javob bera olmayman." });
+        console.error('AI xato:', error);
+        res.json({ success: true, answer: "💡 Kechirasiz, hozircha javob bera olmayman. Keyinroq qayta urinib ko'ring." });
     }
 });
 
-// ============= API 3: NATIJANI SAQLASH =============
+// ============= NATIJALAR (results.json) =============
 const resultsFile = path.join(__dirname, 'results.json');
 
 function loadResults() {
     try {
         if (fs.existsSync(resultsFile)) {
-            return JSON.parse(fs.readFileSync(resultsFile, 'utf8'));
+            const data = fs.readFileSync(resultsFile, 'utf8');
+            return JSON.parse(data);
         }
-    } catch (error) {}
+    } catch (error) {
+        console.error('Load error:', error);
+    }
     return [];
 }
 
 function saveResults(results) {
     try {
         fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
-    } catch (error) {}
+        console.log('✅ Natijalar saqlandi:', results.length);
+    } catch (error) {
+        console.error('Save error:', error);
+    }
 }
 
+// ============= API 3: NATIJANI SAQLASH =============
 app.post('/api/save-result', (req, res) => {
     try {
         const { name, score, weakTopics } = req.body;
+        console.log('📝 Natija saqlanmoqda:', { name, score });
+        
         let results = loadResults();
         results.push({
             name: name || 'Noma\'lum',
@@ -114,10 +125,12 @@ app.post('/api/save-result', (req, res) => {
             weakTopics: weakTopics || [],
             date: new Date().toLocaleString('uz-UZ')
         });
+        
         saveResults(results);
-        res.json({ success: true });
+        res.json({ success: true, message: 'Natija saqlandi' });
     } catch (error) {
-        res.json({ success: false });
+        console.error('Save error:', error);
+        res.json({ success: false, error: error.message });
     }
 });
 
@@ -125,8 +138,10 @@ app.post('/api/save-result', (req, res) => {
 app.get('/api/get-results', (req, res) => {
     try {
         const results = loadResults();
+        console.log('📊 Natijalar o\'qildi:', results.length);
         res.json({ success: true, data: results });
     } catch (error) {
+        console.error('Load error:', error);
         res.json({ success: true, data: [] });
     }
 });
@@ -135,21 +150,35 @@ app.get('/api/get-results', (req, res) => {
 app.delete('/api/clear-results', (req, res) => {
     try {
         saveResults([]);
-        res.json({ success: true });
+        res.json({ success: true, message: 'Barcha natijalar o\'chirildi' });
     } catch (error) {
-        res.json({ success: false });
+        res.json({ success: false, error: error.message });
     }
 });
 
 // ============= BARCHA SAHIFALAR =============
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/lesson.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'lesson.html'));
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ============= SERVER =============
 app.listen(PORT, () => {
-    console.log(`🚀 Server ${PORT}-portda ishga tushdi`);
-    console.log(`📁 Static fayllar: ${path.join(__dirname, 'public')}`);
+    console.log(`
+    ════════════════════════════════════════════
+    🚀 MathAI Server ishga tushdi!
+    📡 Port: ${PORT}
+    🤖 AI: ${useMock ? 'Demo rejim' : 'Gemini AI ulangan'}
+    📁 Admin: /admin.html
+    ════════════════════════════════════════════
+    `);
 });
 
 module.exports = app;
