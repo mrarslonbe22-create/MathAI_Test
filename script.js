@@ -9,36 +9,76 @@ function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+// Random amal (qo'shish yoki ayirish)
+function randomAddSub() {
+  const ops = ["+", "-"];
+  return ops[randomInt(0, 1)];
+}
+
+// Random amal (ko'paytirish yoki bo'lish)
+function randomMulDiv() {
+  const ops = ["×", "÷"];
+  return ops[randomInt(0, 1)];
+}
+
 // Trigonometriya
 function randomTrig() {
   const funcs = ["sin", "cos", "tan", "cot"];
   return funcs[randomInt(0, funcs.length - 1)];
 }
 
-// Savollar
+// Savollar (6 ta)
 function generateQuestions() {
   questions = [];
   answers = [];
 
+  // 1-savol: Qo'shish yoki Ayirish (random)
   let a = randomInt(10, 100);
   let b = randomInt(10, 100);
-  questions.push(`${a} + ${b}`);
-  answers.push(a + b);
+  let op = randomAddSub();
+  if (op === "+") {
+    questions.push(`${a} + ${b}`);
+    answers.push(a + b);
+  } else {
+    // Ayirishda katta son kichikdan ayirilmasligi uchun
+    if (a < b) { let temp = a; a = b; b = temp; }
+    questions.push(`${a} - ${b}`);
+    answers.push(a - b);
+  }
 
+  // 2-savol: Ko'paytirish yoki Bo'lish (random)
   a = randomInt(5, 20);
   b = randomInt(2, 10);
-  questions.push(`${a} × ${b}`);
-  answers.push(a * b);
+  op = randomMulDiv();
+  if (op === "×") {
+    questions.push(`${a} × ${b}`);
+    answers.push(a * b);
+  } else {
+    // Bo'lishda butun son chiqishi uchun
+    let product = a * b;
+    questions.push(`${product} ÷ ${a}`);
+    answers.push(b);
+  }
 
+  // 3-savol: Daraja
   a = randomInt(2, 10);
   let power = randomInt(2, 3);
   questions.push(`${a}^${power}`);
   answers.push(Math.pow(a, power));
 
+  // 4-savol: Ildiz
   a = randomInt(4, 400);
   questions.push(`√${a}`);
   answers.push(Math.round(Math.sqrt(a)));
 
+  // 5-savol: LOGARIFM (yangi qo'shildi!)
+  let logBase = randomInt(2, 5);      // asos 2,3,4,5
+  let logValue = randomInt(2, 4);     // daraja 2,3,4
+  let logNumber = Math.pow(logBase, logValue);
+  questions.push(`log${logBase}(${logNumber})`);
+  answers.push(logValue);
+
+  // 6-savol: Trigonometriya
   let trigFunc = randomTrig();
   let angles = [0, 30, 45, 60];
   let angle = angles[randomInt(0, angles.length - 1)];
@@ -67,7 +107,6 @@ function startTimer() {
     }
     timeLeft--;
 
-    // Progress barni yangilash
     let progress = ((60 - timeLeft - 1) / 60) * 100;
     updateProgress(progress);
 
@@ -78,7 +117,6 @@ function startTimer() {
   }, 1000);
 }
 
-// Progress barni yangilash
 function updateProgress(percent) {
   const progressBar = document.getElementById("progress-bar");
   if (progressBar) {
@@ -88,7 +126,6 @@ function updateProgress(percent) {
   }
 }
 
-// Testni boshlash
 function startTest() {
   const first = document.getElementById("firstName").value;
   const last = document.getElementById("lastName").value;
@@ -105,8 +142,8 @@ function startTest() {
 
   generateQuestions();
 
-  // Savollarni HTML ga joylashtirish
-  for (let i = 1; i <= 5; i++) {
+  // 6 ta savolni HTML ga joylashtirish
+  for (let i = 1; i <= 6; i++) {
     const questionSpan = document.getElementById(`q${i}-text`);
     if (questionSpan) {
       questionSpan.innerText = questions[i - 1];
@@ -121,7 +158,6 @@ function startTest() {
   startTimer();
 }
 
-// Zaif mavzularni aniqlash
 function getWeakTopicsFromTest(wrongTopics) {
   let userData = JSON.parse(localStorage.getItem("userData")) || {};
   
@@ -143,7 +179,7 @@ function getWeakTopicsFromTest(wrongTopics) {
   return weak;
 }
 
-// ============= AI ADVICE (Vercel uchun tuzatilgan) =============
+// AI ADVICE
 async function getAIAdvice(weakTopics, score) {
   const adviceResult = document.getElementById("aiAdvice");
   const adviceBtn = document.getElementById("adviceBtn");
@@ -158,16 +194,10 @@ async function getAIAdvice(weakTopics, score) {
   }
   
   try {
-    // MUHIM: localhost emas, relative path!
     const response = await fetch('/api/advice', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        weakTopics: weakTopics,
-        score: score
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ weakTopics: weakTopics, score: score })
     });
     
     const data = await response.json();
@@ -175,7 +205,7 @@ async function getAIAdvice(weakTopics, score) {
     if (data.success) {
       if (adviceResult) {
         adviceResult.innerHTML = `
-          <div class="ai-advice-box" style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-top: 10px;">
+          <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-top: 10px;">
             <h3>📚 AI Tavsiyasi</h3>
             <p>${data.advice}</p>
           </div>
@@ -184,7 +214,6 @@ async function getAIAdvice(weakTopics, score) {
     } else {
       throw new Error(data.error);
     }
-    
   } catch (error) {
     console.error('Xato:', error);
     if (adviceResult) {
@@ -203,7 +232,7 @@ async function getAIAdvice(weakTopics, score) {
   }
 }
 
-// ============= AI ASK (Vercel uchun tuzatilgan) =============
+// AI ASK
 async function askAI() {
   const questionInput = document.getElementById("questionInput");
   const question = questionInput?.value.trim();
@@ -226,12 +255,9 @@ async function askAI() {
   }
   
   try {
-    // MUHIM: localhost emas, relative path!
     const response = await fetch('/api/ask', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question: question })
     });
     
@@ -250,7 +276,6 @@ async function askAI() {
     } else {
       throw new Error(data.error);
     }
-    
   } catch (error) {
     console.error('Xato:', error);
     if (answerResult) {
@@ -269,20 +294,18 @@ async function askAI() {
   }
 }
 
-// ============= TESTNI TEKSHIRISH =============
+// TESTNI TEKSHIRISH (6 ta savol)
 async function checkTest() {
   clearInterval(timerInterval);
 
   let score = 0;
   let wrongTopics = [];
 
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 6; i++) {
     let user = parseFloat(document.getElementById("q" + i).value);
     let answer = answers[i - 1];
     
-    if (isNaN(user)) {
-      user = 0;
-    }
+    if (isNaN(user)) user = 0;
 
     if (Math.abs(user - answer) < 0.1) {
       score++;
@@ -291,20 +314,19 @@ async function checkTest() {
       if (i === 2) wrongTopics.push("ko'paytirish");
       if (i === 3) wrongTopics.push("daraja");
       if (i === 4) wrongTopics.push("ildiz");
-      if (i === 5) wrongTopics.push("trigonometriya");
+      if (i === 5) wrongTopics.push("logarifm");
+      if (i === 6) wrongTopics.push("trigonometriya");
     }
   }
 
-  // Natijalarni saqlash (serverga yuborish)
   await saveResult(userName, score, wrongTopics);
-  
   let weakTopics = getWeakTopicsFromTest(wrongTopics);
 
   document.getElementById("greeting").innerHTML = `👋 Salom, <strong>${userName}</strong>!`;
   
   const scoreElement = document.getElementById("score");
   if (scoreElement) {
-    scoreElement.innerHTML = `${score}<span style="font-size: 18px;">/5</span>`;
+    scoreElement.innerHTML = `${score}<span style="font-size: 18px;">/6</span>`;
   }
   
   let recommendationText = wrongTopics.length 
@@ -348,9 +370,7 @@ function openLesson(topic) {
   window.location.href = "lesson.html";
 }
 
-// Natijalarni saqlash (serverga yuborish)
 async function saveResult(name, score, weakTopics) {
-  // LocalStorage ga saqlash
   let data = JSON.parse(localStorage.getItem("results")) || [];
   data.push({ 
     name, 
@@ -360,18 +380,15 @@ async function saveResult(name, score, weakTopics) {
   });
   localStorage.setItem("results", JSON.stringify(data));
   
-  // Serverga saqlash
   try {
     await fetch('/api/save-result', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, score, weakTopics: weakTopics || [] })
     });
     console.log("✅ Natija serverga saqlandi");
   } catch (error) {
-    console.log("⚠️ Serverga saqlashda xato, faqat lokal saqlandi");
+    console.log("⚠️ Serverga saqlashda xato");
   }
 }
 
@@ -379,7 +396,6 @@ function restartTest() {
   location.reload();
 }
 
-// Sahifa yuklanganda
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("🧠 MathAI tayyor!");
+  console.log("🧠 MathAI tayyor! 6 ta test mavjud.");
 });
