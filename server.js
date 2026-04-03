@@ -13,8 +13,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Static fayllar - MUHIM!
-app.use(express.static(__dirname));app.use(express.static(__dirname));
+// Static fayllar - TO'G'RILANGAN!
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Gemini AI sozlamalari
 let genAI = null;
 let useMock = true;
@@ -42,13 +43,13 @@ app.post('/api/advice', async (req, res) => {
             if (weakTopics && weakTopics.length > 0) {
                 advice += `Zaif mavzularingiz: ${weakTopics.join(', ')}. Ushbu mavzularni qayta takrorlang.`;
             } else {
-                advice += `Siz ${score}/5 ball to'pladingiz. Yaxshi natija!`;
+                advice += `Siz ${score}/6 ball to'pladingiz. Yaxshi natija!`;
             }
             return res.json({ success: true, advice });
         }
         
         const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        const prompt = `O'quvchi matematika testida ${score}/5 ball oldi. Zaif mavzulari: ${weakTopics?.join(', ') || "Yo'q"}. Qisqa maslahat bering. O'zbek tilida.`;
+        const prompt = `O'quvchi matematika testida ${score}/6 ball oldi. Zaif mavzulari: ${weakTopics?.join(', ') || "Yo'q"}. Qisqa maslahat bering. O'zbek tilida.`;
         const result = await model.generateContent(prompt);
         const advice = result.response.text();
         
@@ -97,6 +98,12 @@ function loadResults() {
     return [];
 }
 
+function saveResults(results) {
+    try {
+        fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
+    } catch (error) {}
+}
+
 app.post('/api/save-result', (req, res) => {
     try {
         const { name, score, weakTopics } = req.body;
@@ -107,7 +114,7 @@ app.post('/api/save-result', (req, res) => {
             weakTopics: weakTopics || [],
             date: new Date().toLocaleString('uz-UZ')
         });
-        fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
+        saveResults(results);
         res.json({ success: true });
     } catch (error) {
         res.json({ success: false });
@@ -127,7 +134,7 @@ app.get('/api/get-results', (req, res) => {
 // ============= API 5: NATIJALARNI TOZALASH =============
 app.delete('/api/clear-results', (req, res) => {
     try {
-        fs.writeFileSync(resultsFile, JSON.stringify([], null, 2));
+        saveResults([]);
         res.json({ success: true });
     } catch (error) {
         res.json({ success: false });
@@ -135,22 +142,6 @@ app.delete('/api/clear-results', (req, res) => {
 });
 
 // ============= BARCHA SAHIFALAR =============
-app.get('/admin.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-app.get('/lesson.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'lesson.html'));
-});
-
-app.get('/script.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'script.js'));
-});
-
-app.get('/style.css', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'style.css'));
-});
-
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -158,6 +149,7 @@ app.get('/', (req, res) => {
 // ============= SERVER =============
 app.listen(PORT, () => {
     console.log(`🚀 Server ${PORT}-portda ishga tushdi`);
+    console.log(`📁 Static fayllar: ${path.join(__dirname, 'public')}`);
 });
 
 module.exports = app;
