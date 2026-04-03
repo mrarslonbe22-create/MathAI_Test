@@ -111,6 +111,21 @@
             justify-content: center;
             margin-top: 20px;
         }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
     </style>
 </head>
 <body>
@@ -120,11 +135,11 @@
     
     <div class="stats" id="stats">
         <p>📈 Jami test topshirganlar: <strong id="totalCount">0</strong></p>
-        <p>⭐ O'rtacha ball: <strong id="avgScore">0</strong>/5</p>
+        <p>⭐ O'rtacha ball: <strong id="avgScore">0</strong>/6</p>
     </div>
     
     <div style="overflow-x: auto;">
-        <table>
+        <table id="resultsTable">
             <thead>
                 <tr>
                     <th>#</th>
@@ -134,15 +149,17 @@
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <tr>
-                    <td colspan="4" style="text-align: center;">Yuklanmoqda...</td>
-                </tr>
+                <tr><td colspan="4" class="loading">⏳ Yuklanmoqda...</td></tr>
             </tbody>
         </table>
     </div>
 
     <div id="emptyMessage" style="display:none;" class="empty-data">
         📭 Hozircha hech qanday natija yo'q
+    </div>
+    
+    <div id="errorMessage" style="display:none;" class="error-message">
+        ❌ Ma'lumotlarni yuklashda xatolik yuz berdi
     </div>
 
     <div class="button-group">
@@ -158,44 +175,74 @@
 <script>
 // Ma'lumotlarni yuklash
 async function loadResults() {
+    const tableBody = document.getElementById("tableBody");
+    const emptyMessage = document.getElementById("emptyMessage");
+    const errorMessage = document.getElementById("errorMessage");
+    
+    // Yuklanayotganini ko'rsatish
+    tableBody.innerHTML = '<tr><td colspan="4" class="loading">⏳ Yuklanmoqda...</td></tr>';
+    emptyMessage.style.display = "none";
+    errorMessage.style.display = "none";
+    
     try {
+        // Serverdan ma'lumot olish
         const response = await fetch('/api/get-results');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
         const data = await response.json();
         
         if (data.success && data.data) {
             displayResults(data.data);
         } else {
+            // Lokal storage dan o'qish
             let localData = JSON.parse(localStorage.getItem("results")) || [];
             displayResults(localData);
         }
     } catch (error) {
-        console.log('Serverga ulanishda xato:', error);
-        let localData = JSON.parse(localStorage.getItem("results")) || [];
-        displayResults(localData);
+        console.error('Xato:', error);
+        // Lokal storage dan o'qish
+        try {
+            let localData = JSON.parse(localStorage.getItem("results")) || [];
+            if (localData.length > 0) {
+                displayResults(localData);
+            } else {
+                throw new Error('Hech qanday ma\'lumot yo\'q');
+            }
+        } catch (e) {
+            errorMessage.style.display = "block";
+            tableBody.innerHTML = '<tr><td colspan="4">❌ Server va lokalda ma\'lumot topilmadi</td></tr>';
+        }
     }
 }
 
 function displayResults(data) {
-    let html = "";
+    const tableBody = document.getElementById("tableBody");
+    const emptyMessage = document.getElementById("emptyMessage");
     
     if (!data || data.length === 0) {
-        document.getElementById("emptyMessage").style.display = "block";
-        document.getElementById("tableBody").innerHTML = "";
+        emptyMessage.style.display = "block";
+        tableBody.innerHTML = "";
         document.getElementById("totalCount").innerText = "0";
         document.getElementById("avgScore").innerText = "0";
         return;
     }
     
-    document.getElementById("emptyMessage").style.display = "none";
+    emptyMessage.style.display = "none";
     
     let totalScore = 0;
+    let html = "";
+    
     data.forEach((d, index) => {
-        totalScore += d.score || 0;
+        let scoreValue = d.score || 0;
+        totalScore += scoreValue;
         html += `
             <tr>
                 <td>${index + 1}</td>
                 <td><strong>${d.name || 'Noma\'lum'}</strong></td>
-                <td>${d.score || 0}/5</td>
+                <td>${scoreValue}/6</td>
                 <td>${d.date || 'Noma\'lum'}</td>
             </tr>
         `;
@@ -212,12 +259,16 @@ function displayResults(data) {
 async function clearData() {
     if (confirm("Haqiqatan ham barcha natijalarni o'chirmoqchimisiz?")) {
         try {
+            // Serverdan o'chirish
             await fetch('/api/clear-results', { method: 'DELETE' });
+            // Lokal storage dan o'chirish
             localStorage.removeItem("results");
             localStorage.removeItem("userData");
+            // Qayta yuklash
             loadResults();
             alert("✅ Barcha natijalar o'chirildi!");
         } catch (error) {
+            // Agar server ishlamasa, faqat localStorage dan o'chirish
             localStorage.removeItem("results");
             localStorage.removeItem("userData");
             loadResults();
