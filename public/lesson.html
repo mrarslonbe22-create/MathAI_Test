@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MathAI - Dars</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .lesson-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 20px;
+      font-size: 28px;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .lesson-content {
+      background: #f5f5f5;
+      padding: 25px;
+      border-radius: 15px;
+      margin: 20px 0;
+      color: #333;
+    }
+
+    .lesson-content h3 {
+      color: #667eea;
+      margin-top: 20px;
+      margin-bottom: 15px;
+      font-size: 22px;
+      border-left: 4px solid #667eea;
+      padding-left: 12px;
+    }
+
+    .lesson-content h4 {
+      color: #764ba2;
+      margin-top: 15px;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .lesson-content p {
+      margin: 12px 0;
+      line-height: 1.6;
+      font-size: 16px;
+      color: #2c3e50;
+    }
+
+    .formula {
+      background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+      padding: 15px;
+      border-radius: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 20px;
+      text-align: center;
+      margin: 15px 0;
+      color: #667eea;
+      font-weight: bold;
+      border: 1px solid #667eea50;
+    }
+
+    .example-box {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 12px;
+      margin: 15px 0;
+      border-left: 4px solid #4CAF50;
+    }
+
+    .example-box p {
+      margin: 8px 0;
+      color: #2e7d32;
+    }
+
+    .rule-box {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 12px;
+      margin: 15px 0;
+      border-left: 4px solid #2196F3;
+    }
+
+    .rule-box p {
+      margin: 8px 0;
+      color: #1565c0;
+    }
+
+    .theory-box {
+      background: #fff3e0;
+      padding: 15px;
+      border-radius: 12px;
+      margin: 15px 0;
+      border-left: 4px solid #ff9800;
+    }
+
+    .theory-box p {
+      margin: 8px 0;
+      color: #e65100;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin: 15px 0;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .btn-back {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      font-size: 16px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      display: block;
+      margin: 20px auto 0;
+      width: 200px;
+    }
+
+    .btn-back:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    ul, ol {
+      margin: 10px 0 10px 25px;
+    }
+
+    li {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+
+    code {
+      background: #e0e0e0;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 16px;
+      color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+
+<div class="lesson-container">
+  <h1 id="title"></h1>
+  <div id="content" class="lesson-content"></div>
+  <button class="btn-back" onclick="goBack()">← Orqaga qaytish</button>
+</div>
+
+<script>
+const topic = localStorage.getItem("topic");
+
+const lessons = {
+  "qo'shish": {
+    title: "➕ Qo'shish",
+    content: `
+      <div class="theory-box">
+        <h3>📖 Qo'shish nima?</h3>
+        <p>Qo'shish - bu ikki yoki undan ortiq sonlarni bir joyga yig'ish amalidir. Qo'shish natijasi "yig'indi" deb ataladi.</p>
+      </div>
+
+      <div class="formula">a + b = c</div>
+
+      <div class="example-box">
+        <h3>📝 Misollar:</h3>
+        <p>5 + 3 = 8</p>
+        <p>12 + 7 = 19</p>
+        <p>25 + 15 = 40</p>
+        <p>100 + 50 = 150</p>
+      </div>
+
+      <div class="rule-box">
+        <h3>💡 Qoidalar:</h3>
+        <p>• O'rin almashtirish qonuni: a + b = b + a</p>
+        <p>• Guruhlash qonuni: (a + b) + c = a + (b + c)</p>
+        <p>• Nol bilan qo'shish: a + 0 = a</p>
+      </div>
+    `
+  },
+  
+  "ko'paytirish": {
+    title: "✖️ Ko'paytirish",
+    content: `
+      <div class="theory-box">
+        <h3>📖 Ko'paytirish nima?</h3>
+        <p>Ko'paytirish - bu bir xil sonlarni qo'shishning qisqa usuli. Masalan, 3 + 3 + 3 + 3 = 3 × 4 = 12.</p>
+      </div>
+
+      <div class="formula">a × b = c</div>
+
+      <div class="example-box">
+        <h3>📝 Misollar:</h3>
+        <p>3 × 4 = 12 (3 + 3 + 3 + 3 = 12)</p>
+        <p>5 × 6 = 30</p>
+        <p>7 × 8 = 56</p>
+        <p>9 × 9 = 81</p>
+      </div>
+
+      <div class="rule-box">
+        <h3>💡 Ko'paytirish jadvali:</h3>
+        <p>2×2=4 | 3×3=9 | 4×4=16 | 5×5=25</p>
+        <p>6×6=36 | 7×7=49 | 8×8=64 | 9×9=81</p>
+      </div>
+    `
+  },
+  
+  "daraja": {
+    title: "🔢 Daraja",
+    content: `
+      <div class="theory-box">
+        <h3>📖 Daraja nima?</h3>
+        <p>Daraja - sonni o'ziga bir necha marta ko'paytirish. aⁿ ko'rinishida yoziladi, bunda a - asos, n - daraja ko'rsatkichi.</p>
+      </div>
+
+      <div class="formula">aⁿ = a × a × a × ... (n marta)</div>
+
+      <div class="example-box">
+        <h3>📝 Misollar:</h3>
+        <p>2³ = 2 × 2 × 2 = 8</p>
+        <p>3² = 3 × 3 = 9</p>
+        <p>4² = 16, 5² = 25, 6² = 36</p>
+        <p>10³ = 1000</p>
+      </div>
+
+      <div class="rule-box">
+        <h3>💡 Formulalar:</h3>
+        <p>• aⁿ × aᵐ = aⁿ⁺ᵐ</p>
+        <p>• (aⁿ)ᵐ = aⁿᵐ</p>
+        <p>• a⁰ = 1</p>
+        <p>• a⁻ⁿ = 1/aⁿ</p>
+        <p>• (ab)ⁿ = aⁿ × bⁿ</p>
+      </div>
+    `
+  },
+
+  "ildiz": {
+    title: "√ Ildiz",
+    content: `
+      <div class="theory-box">
+        <h3>📖 Ildiz nima?</h3>
+        <p>Ildiz - darajaning teskari amali. Kvadrat ildiz - qaysi sonni o'ziga ko'paytirsak berilgan son hosil bo'ladi.</p>
+      </div>
+
+      <div class="formula">√a = b  ⇔  b² = a</div>
+
+      <div class="example-box">
+        <h3>📝 Misollar:</h3>
+        <p>√4 = 2 (chunki 2 × 2 = 4)</p>
+        <p>√9 = 3 (3 × 3 = 9)</p>
+        <p>√16 = 4, √25 = 5, √36 = 6</p>
+        <p>√100 = 10</p>
+      </div>
+
+      <div class="rule-box">
+        <h3>💡 Formulalar:</h3>
+        <p>• √(a × b) = √a × √b</p>
+        <p>• √(a / b) = √a / √b</p>
+        <p>• √(a²) = |a|</p>
+        <p>• (√a)² = a</p>
+      </div>
+    `
+  },
+
+  "logarifm": {
+    title: "📊 Logarifm",
+    content: `
+      <div class="theory-box">
+        <h3>📖 Logarifm nima?</h3>
+        <p>Logarifm - darajaning teskari funksiyasi. logₐb = x ⇔ aˣ = b. Logarifm qaysi darajaga ko'tarilganda berilgan son hosil bo'lishini ko'rsatadi.</p>
+      </div>
+
+      <div class="formula">logₐb = x  ⇔  aˣ = b</div>
+
+      <div class="example-box">
+        <h3>📝 Misollar:</h3>
+        <p>log₂8 = 3 (chunki 2³ = 8)</p>
+        <p>log₃9 = 2 (3² = 9)</p>
+        <p>log₁₀100 = 2 (10² = 100)</p>
+        <p>log₅125 = 3 (5³ = 125)</p>
+      </div>
+
+      <div class="rule-box">
+        <h3>💡 Formulalar:</h3>
+        <p>• logₐ(xy) = logₐx + logₐy</p>
+        <p>• logₐ(x/y) = logₐx - logₐy</p>
+        <p>• logₐ(xⁿ) = n × logₐx</p>
+        <p>• logₐ1 = 0, logₐa = 1</p>
+        <p>• logₐb = log b / log a (asos almashtirish)</p>
+      </div>
+    `
+  },
+
+  "trigonometriya": {
+    title: "📐 Trigonometriya",
+    content: `
+      <div class="theory-box">
+        <h3>📖 Trigonometriya nima?</h3>
+        <p>Trigonometriya - uchburchak burchaklari va tomonlari orasidagi munosabatlarni o'rganadi. Asosiy funksiyalar: sinus (sin), kosinus (cos), tangens (tan), kotangens (cot).</p>
+      </div>
+
+      <div class="formula">sin²x + cos²x = 1</div>
+      <div class="formula">tan x = sin x / cos x</div>
+      <div class="formula">cot x = cos x / sin x</div>
+
+      <div class="example-box">
+        <h3>📝 Asosiy qiymatlar:</h3>
+        <p>sin 0° = 0, sin 30° = 0.5, sin 45° = √2/2, sin 60° = √3/2, sin 90° = 1</p>
+        <p>cos 0° = 1, cos 30° = √3/2, cos 45° = √2/2, cos 60° = 0.5, cos 90° = 0</p>
+        <p>tan 45° = 1, tan 30° = 1/√3, tan 60° = √3</p>
+      </div>
+
+      <div class="rule-box">
+        <h3>💡 Formulalar:</h3>
+        <p>• sin(α ± β) = sinα·cosβ ± cosα·sinβ</p>
+        <p>• cos(α ± β) = cosα·cosβ ∓ sinα·sinβ</p>
+        <p>• sin2α = 2 sinα·cosα</p>
+        <p>• cos2α = cos²α - sin²α = 2cos²α - 1 = 1 - 2sin²α</p>
+      </div>
+
+      <div class="theory-box">
+        <h3>💡 Qo'llanilishi:</h3>
+        <p>Fizika, muhandislik, arxitektura, astronomiya va kompyuter grafikasida keng qo'llaniladi.</p>
+      </div>
+    `
+  }
+};
+
+// Mavzu borligini tekshirish
+if (lessons[topic]) {
+  document.getElementById("title").innerText = lessons[topic].title;
+  document.getElementById("content").innerHTML = lessons[topic].content;
+} else {
+  document.getElementById("title").innerText = "📚 Mavzu topilmadi";
+  document.getElementById("content").innerHTML = `
+    <div class="theory-box">
+      <p style="text-align: center; font-size: 18px;">Kechirasiz, bu mavzu bo'yicha ma'lumot hali qo'shilmagan.</p>
+      <p style="text-align: center;">Tez orada qo'shiladi!</p>
+    </div>
+  `;
+}
+
+function goBack() {
+  window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
