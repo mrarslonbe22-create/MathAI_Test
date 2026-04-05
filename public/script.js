@@ -3,6 +3,7 @@ let answers = [];
 let userName = "";
 let timeLeft = 60;
 let timerInterval;
+let startTime; // Test boshlangan vaqt
 
 // Random son
 function randomInt(min, max) {
@@ -32,7 +33,7 @@ function generateQuestions() {
   questions = [];
   answers = [];
 
-  // 1-savol: Qo'shish yoki Ayirish (random)
+  // 1-savol: Qo'shish yoki Ayirish
   let a = randomInt(10, 100);
   let b = randomInt(10, 100);
   let op = randomAddSub();
@@ -40,13 +41,12 @@ function generateQuestions() {
     questions.push(`${a} + ${b}`);
     answers.push(a + b);
   } else {
-    // Ayirishda katta son kichikdan ayirilmasligi uchun
     if (a < b) { let temp = a; a = b; b = temp; }
     questions.push(`${a} - ${b}`);
     answers.push(a - b);
   }
 
-  // 2-savol: Ko'paytirish yoki Bo'lish (random)
+  // 2-savol: Ko'paytirish yoki Bo'lish
   a = randomInt(5, 20);
   b = randomInt(2, 10);
   op = randomMulDiv();
@@ -54,7 +54,6 @@ function generateQuestions() {
     questions.push(`${a} × ${b}`);
     answers.push(a * b);
   } else {
-    // Bo'lishda butun son chiqishi uchun
     let product = a * b;
     questions.push(`${product} ÷ ${a}`);
     answers.push(b);
@@ -71,9 +70,9 @@ function generateQuestions() {
   questions.push(`√${a}`);
   answers.push(Math.round(Math.sqrt(a)));
 
-  // 5-savol: LOGARIFM (yangi qo'shildi!)
-  let logBase = randomInt(2, 5);      // asos 2,3,4,5
-  let logValue = randomInt(2, 4);     // daraja 2,3,4
+  // 5-savol: Logarifm
+  let logBase = randomInt(2, 5);
+  let logValue = randomInt(2, 4);
   let logNumber = Math.pow(logBase, logValue);
   questions.push(`log${logBase}(${logNumber})`);
   answers.push(logValue);
@@ -99,6 +98,7 @@ function generateQuestions() {
 // Timer
 function startTimer() {
   timeLeft = 60;
+  startTime = Date.now(); // Test boshlangan vaqtni saqlash
   const timerElement = document.getElementById("timer");
   
   timerInterval = setInterval(() => {
@@ -142,7 +142,6 @@ function startTest() {
 
   generateQuestions();
 
-  // 6 ta savolni HTML ga joylashtirish
   for (let i = 1; i <= 6; i++) {
     const questionSpan = document.getElementById(`q${i}-text`);
     if (questionSpan) {
@@ -179,7 +178,45 @@ function getWeakTopicsFromTest(wrongTopics) {
   return weak;
 }
 
-// AI ADVICE
+// ============= NATIJALARNI SAQLASH (VAQT BILAN) =============
+async function saveResult(name, score, weakTopics, timeSpent) {
+  // Vaqtni hisoblash (agar timeSpent berilmagan bo'lsa, 60 - timeLeft)
+  const spentTime = timeSpent || (60 - timeLeft);
+  
+  const resultData = {
+    id: Date.now(),
+    name: name,
+    score: score,
+    maxScore: 6,
+    weakTopics: weakTopics || [],
+    timeSpent: spentTime,  // Qancha vaqt sarflangan (soniya)
+    date: new Date().toLocaleString('uz-UZ'),
+    timestamp: new Date().toISOString()
+  };
+  
+  // 1. LocalStorage ga saqlash
+  let data = JSON.parse(localStorage.getItem("results")) || [];
+  data.push(resultData);
+  localStorage.setItem("results", JSON.stringify(data));
+  console.log("✅ LocalStorage ga saqlandi:", resultData);
+  
+  // 2. Serverga saqlash
+  try {
+    const response = await fetch('/api/save-result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(resultData)
+    });
+    const result = await response.json();
+    if (result.success) {
+      console.log("✅ Serverga saqlandi");
+    }
+  } catch (error) {
+    console.log("⚠️ Serverga saqlashda xato");
+  }
+}
+
+// ============= AI ADVICE =============
 async function getAIAdvice(weakTopics, score) {
   const adviceResult = document.getElementById("aiAdvice");
   const adviceBtn = document.getElementById("adviceBtn");
@@ -190,7 +227,7 @@ async function getAIAdvice(weakTopics, score) {
   }
   
   if (adviceResult) {
-    adviceResult.innerHTML = '<p style="color: #667eea;">🤖 AI dan maslahat olinyapti...</p>';
+    adviceResult.innerHTML = '<p>🤖 AI dan maslahat olinyapti...</p>';
   }
   
   try {
@@ -205,24 +242,17 @@ async function getAIAdvice(weakTopics, score) {
     if (data.success) {
       if (adviceResult) {
         adviceResult.innerHTML = `
-          <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-top: 10px;">
+          <div class="ai-advice-box">
             <h3>📚 AI Tavsiyasi</h3>
             <p>${data.advice}</p>
           </div>
         `;
       }
-    } else {
-      throw new Error(data.error);
     }
   } catch (error) {
     console.error('Xato:', error);
     if (adviceResult) {
-      adviceResult.innerHTML = `
-        <div style="background: #ffebee; padding: 15px; border-radius: 10px; margin-top: 10px; color: red;">
-          ❌ Xatolik: ${error.message}<br>
-          ⚠️ Internet ulanishini tekshiring
-        </div>
-      `;
+      adviceResult.innerHTML = `<div class="error-box">❌ Xatolik yuz berdi</div>`;
     }
   } finally {
     if (adviceBtn) {
@@ -232,7 +262,7 @@ async function getAIAdvice(weakTopics, score) {
   }
 }
 
-// AI ASK
+// ============= AI ASK =============
 async function askAI() {
   const questionInput = document.getElementById("questionInput");
   const question = questionInput?.value.trim();
@@ -251,7 +281,7 @@ async function askAI() {
   }
   
   if (answerResult) {
-    answerResult.innerHTML = '<p style="color: #667eea;">🤔 AI javob yozyapti...</p>';
+    answerResult.innerHTML = '<p>🤔 AI javob yozyapti...</p>';
   }
   
   try {
@@ -266,25 +296,18 @@ async function askAI() {
     if (data.success) {
       if (answerResult) {
         answerResult.innerHTML = `
-          <div style="background: #f1f8e9; padding: 15px; border-radius: 10px; margin-top: 10px;">
+          <div class="answer-box">
             <h3>💡 Javob:</h3>
             <p>${data.answer}</p>
           </div>
         `;
       }
       questionInput.value = "";
-    } else {
-      throw new Error(data.error);
     }
   } catch (error) {
     console.error('Xato:', error);
     if (answerResult) {
-      answerResult.innerHTML = `
-        <div style="background: #ffebee; padding: 15px; border-radius: 10px; margin-top: 10px; color: red;">
-          ❌ Xatolik: ${error.message}<br>
-          ⚠️ Internet ulanishini tekshiring
-        </div>
-      `;
+      answerResult.innerHTML = `<div class="error-box">❌ Xatolik yuz berdi</div>`;
     }
   } finally {
     if (askBtn) {
@@ -294,7 +317,7 @@ async function askAI() {
   }
 }
 
-// TESTNI TEKSHIRISH (6 ta savol)
+// ============= TESTNI TEKSHIRISH =============
 async function checkTest() {
   clearInterval(timerInterval);
 
@@ -319,7 +342,12 @@ async function checkTest() {
     }
   }
 
-  await saveResult(userName, score, wrongTopics);
+  // Sarflangan vaqtni hisoblash (60 - qolgan vaqt)
+  const timeSpent = 60 - timeLeft;
+  
+  // Natijalarni saqlash (vaqt bilan birga)
+  await saveResult(userName, score, wrongTopics, timeSpent);
+  
   let weakTopics = getWeakTopicsFromTest(wrongTopics);
 
   document.getElementById("greeting").innerHTML = `👋 Salom, <strong>${userName}</strong>!`;
@@ -329,9 +357,14 @@ async function checkTest() {
     scoreElement.innerHTML = `${score}<span style="font-size: 18px;">/6</span>`;
   }
   
+  // Vaqtni ko'rsatish
+  const minutes = Math.floor(timeSpent / 60);
+  const seconds = timeSpent % 60;
+  const timeText = minutes > 0 ? `${minutes} daqiqa ${seconds} soniya` : `${seconds} soniya`;
+  
   let recommendationText = wrongTopics.length 
-    ? `📖 O'rganishingiz kerak bo'lgan mavzular: <strong>${wrongTopics.join(", ")}</strong>` 
-    : "🎉 A'lo! Barcha savollarga to'g'ri javob berdingiz! Tabriklaymiz!";
+    ? `📖 O'rganishingiz kerak bo'lgan mavzular: <strong>${wrongTopics.join(", ")}</strong><br>⏱ Sarflangan vaqt: ${timeText}`
+    : `🎉 A'lo! Barcha savollarga to'g'ri javob berdingiz!<br>⏱ Sarflangan vaqt: ${timeText}`;
   
   document.getElementById("recommendation").innerHTML = recommendationText;
 
@@ -370,32 +403,10 @@ function openLesson(topic) {
   window.location.href = "lesson.html";
 }
 
-async function saveResult(name, score, weakTopics) {
-  let data = JSON.parse(localStorage.getItem("results")) || [];
-  data.push({ 
-    name, 
-    score, 
-    weakTopics: weakTopics || [],
-    date: new Date().toLocaleString('uz-UZ') 
-  });
-  localStorage.setItem("results", JSON.stringify(data));
-  
-  try {
-    await fetch('/api/save-result', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score, weakTopics: weakTopics || [] })
-    });
-    console.log("✅ Natija serverga saqlandi");
-  } catch (error) {
-    console.log("⚠️ Serverga saqlashda xato");
-  }
-}
-
 function restartTest() {
   location.reload();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("🧠 MathAI tayyor! 6 ta test mavjud.");
+  console.log("🧠 MathAI tayyor!");
 });
