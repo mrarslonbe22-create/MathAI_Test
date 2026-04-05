@@ -19,7 +19,7 @@
         }
         
         .admin-container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -126,6 +126,29 @@
             padding: 40px;
             color: #667eea;
         }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-high {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .badge-medium {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .badge-low {
+            background: #f44336;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -136,6 +159,7 @@
     <div class="stats" id="stats">
         <p>📈 Jami test topshirganlar: <strong id="totalCount">0</strong></p>
         <p>⭐ O'rtacha ball: <strong id="avgScore">0</strong>/6</p>
+        <p>⏱ O'rtacha vaqt: <strong id="avgTime">0</strong> soniya</p>
     </div>
     
     <div style="overflow-x: auto;">
@@ -146,10 +170,12 @@
                     <th>Ism Familiya</th>
                     <th>Ball</th>
                     <th>Vaqt</th>
+                    <th>Sana</th>
+                    <th>Zaif mavzular</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <tr><td colspan="4" class="loading">⏳ Yuklanmoqda...</td></tr>
+                <tr><td colspan="6" class="loading">⏳ Yuklanmoqda...</td><tr>
             </tbody>
         </table>
     </div>
@@ -173,102 +199,146 @@
 </div>
 
 <script>
+// Vaqtni formatlash
+function formatTime(seconds) {
+    if (!seconds && seconds !== 0) return "Noma'lum";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+        return `${mins} min ${secs} sek`;
+    }
+    return `${secs} sek`;
+}
+
+// Ball bo'yicha rang
+function getBallBadge(score) {
+    const percent = (score / 6) * 100;
+    if (percent >= 80) return '<span class="badge badge-high">Aʼlo</span>';
+    if (percent >= 60) return '<span class="badge badge-medium">Yaxshi</span>';
+    return '<span class="badge badge-low">Qoniqarsiz</span>';
+}
+
 // Ma'lumotlarni yuklash
 async function loadResults() {
     const tableBody = document.getElementById("tableBody");
     const emptyMessage = document.getElementById("emptyMessage");
     const errorMessage = document.getElementById("errorMessage");
     
-    // Yuklanayotganini ko'rsatish
-    tableBody.innerHTML = '<tr><td colspan="4" class="loading">⏳ Yuklanmoqda...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="loading">⏳ Yuklanmoqda...</td><tr>';
     emptyMessage.style.display = "none";
     errorMessage.style.display = "none";
     
+    let allData = [];
+    
+    // 1. LocalStorage dan o'qish
     try {
-        // Serverdan ma'lumot olish
-        const response = await fetch('/api/get-results');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+        const localData = JSON.parse(localStorage.getItem("results")) || [];
+        if (localData.length > 0) {
+            allData = [...localData];
+            console.log("📊 LocalStorage dan o'qildi:", localData.length);
         }
-        
+    } catch (e) {
+        console.log("LocalStorage o'qishda xato");
+    }
+    
+    // 2. Serverdan o'qish
+    try {
+        const response = await fetch('/api/get-results');
         const data = await response.json();
-        
-        if (data.success && data.data) {
-            displayResults(data.data);
-        } else {
-            // Lokal storage dan o'qish
-            let localData = JSON.parse(localStorage.getItem("results")) || [];
-            displayResults(localData);
+        if (data.success && data.data && data.data.length > 0) {
+            // Server ma'lumotlarini qo'shish (takrorlanmasligi uchun)
+            const existingIds = new Set(allData.map(d => d.id));
+            const newData = data.data.filter(d => !existingIds.has(d.id));
+            allData = [...allData, ...newData];
+            console.log("📊 Serverdan o'qildi:", data.data.length);
         }
     } catch (error) {
-        console.error('Xato:', error);
-        // Lokal storage dan o'qish
-        try {
-            let localData = JSON.parse(localStorage.getItem("results")) || [];
-            if (localData.length > 0) {
-                displayResults(localData);
-            } else {
-                throw new Error('Hech qanday ma\'lumot yo\'q');
-            }
-        } catch (e) {
-            errorMessage.style.display = "block";
-            tableBody.innerHTML = '<tr><td colspan="4">❌ Server va lokalda ma\'lumot topilmadi</td></tr>';
-        }
+        console.log("Serverga ulanishda xato");
     }
+    
+    if (allData.length === 0) {
+        emptyMessage.style.display = "block";
+        tableBody.innerHTML = "";
+        document.getElementById("totalCount").innerText = "0";
+        document.getElementById("avgScore").innerText = "0";
+        document.getElementById("avgTime").innerText = "0";
+        return;
+    }
+    
+    displayResults(allData);
 }
 
 function displayResults(data) {
     const tableBody = document.getElementById("tableBody");
     const emptyMessage = document.getElementById("emptyMessage");
     
-    if (!data || data.length === 0) {
-        emptyMessage.style.display = "block";
-        tableBody.innerHTML = "";
-        document.getElementById("totalCount").innerText = "0";
-        document.getElementById("avgScore").innerText = "0";
-        return;
-    }
-    
     emptyMessage.style.display = "none";
     
     let totalScore = 0;
+    let totalTime = 0;
+    let timeCount = 0;
     let html = "";
     
-    data.forEach((d, index) => {
+    // Natijalarni vaqt bo'yicha teskari tartibda (eng yangisi birinchi)
+    const sortedData = [...data].reverse();
+    
+    sortedData.forEach((d, index) => {
         let scoreValue = d.score || 0;
+        let timeValue = d.timeSpent || null;
         totalScore += scoreValue;
+        
+        if (timeValue) {
+            totalTime += timeValue;
+            timeCount++;
+        }
+        
+        // Zaif mavzularni formatlash
+        let weakTopicsText = "";
+        if (d.weakTopics && d.weakTopics.length > 0) {
+            weakTopicsText = d.weakTopics.join(", ");
+        } else {
+            weakTopicsText = "—";
+        }
+        
         html += `
             <tr>
                 <td>${index + 1}</td>
-                <td><strong>${d.name || 'Noma\'lum'}</strong></td>
-                <td>${scoreValue}/6</td>
+                <td><strong>${escapeHtml(d.name || 'Noma\'lum')}</strong></td>
+                <td>${scoreValue}/6 ${getBallBadge(scoreValue)}</td>
+                <td>${formatTime(timeValue)}</td>
                 <td>${d.date || 'Noma\'lum'}</td>
+                <td><small>${weakTopicsText}</small></td>
             </tr>
         `;
     });
     
     let avgScore = (totalScore / data.length).toFixed(2);
+    let avgPercent = Math.round((totalScore / (data.length * 6)) * 100);
+    let avgTime = timeCount > 0 ? Math.round(totalTime / timeCount) : 0;
     
     document.getElementById("tableBody").innerHTML = html;
     document.getElementById("totalCount").innerText = data.length;
-    document.getElementById("avgScore").innerText = avgScore;
+    document.getElementById("avgScore").innerHTML = `${avgScore}/6 (${avgPercent}%)`;
+    document.getElementById("avgTime").innerHTML = formatTime(avgTime);
+}
+
+// XSS himoyasi uchun
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Ma'lumotlarni tozalash
 async function clearData() {
     if (confirm("Haqiqatan ham barcha natijalarni o'chirmoqchimisiz?")) {
         try {
-            // Serverdan o'chirish
             await fetch('/api/clear-results', { method: 'DELETE' });
-            // Lokal storage dan o'chirish
             localStorage.removeItem("results");
             localStorage.removeItem("userData");
-            // Qayta yuklash
             loadResults();
             alert("✅ Barcha natijalar o'chirildi!");
         } catch (error) {
-            // Agar server ishlamasa, faqat localStorage dan o'chirish
             localStorage.removeItem("results");
             localStorage.removeItem("userData");
             loadResults();
@@ -285,4 +355,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-
