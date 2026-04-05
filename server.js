@@ -12,11 +12,96 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Static fayllar - TO'G'RI
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Gemini AI sozlamalari
+// ============= RESULTS.JSON FAJL =============
+const resultsFile = path.join(__dirname, 'results.json');
+
+// Natijalarni o'qish
+function loadResults() {
+    try {
+        if (fs.existsSync(resultsFile)) {
+            const data = fs.readFileSync(resultsFile, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (error) {
+        console.error('Load error:', error.message);
+    }
+    return [];
+}
+
+// Natijalarni saqlash
+function saveResults(results) {
+    try {
+        fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
+        console.log('✅ Natijalar saqlandi. Jami:', results.length);
+        return true;
+    } catch (error) {
+        console.error('Save error:', error.message);
+        return false;
+    }
+}
+
+// ============= API: NATIJANI SAQLASH =============
+app.post('/api/save-result', (req, res) => {
+    console.log('📥 So\'rov keldi:', req.body);
+    
+    try {
+        const { name, score, weakTopics } = req.body;
+        
+        // Ma'lumotlarni tekshirish
+        if (!name) {
+            return res.json({ success: false, error: 'Name required' });
+        }
+        
+        let results = loadResults();
+        
+        const newResult = {
+            id: Date.now(),
+            name: name || 'Noma\'lum',
+            score: score || 0,
+            weakTopics: weakTopics || [],
+            date: new Date().toLocaleString('uz-UZ')
+        };
+        
+        results.push(newResult);
+        
+        if (saveResults(results)) {
+            console.log('✅ Natija saqlandi:', newResult);
+            res.json({ success: true, message: 'Natija saqlandi', data: newResult });
+        } else {
+            res.json({ success: false, error: 'Faylga yozishda xatolik' });
+        }
+        
+    } catch (error) {
+        console.error('Save error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// ============= API: NATIJALARNI OLISH =============
+app.get('/api/get-results', (req, res) => {
+    try {
+        const results = loadResults();
+        console.log('📊 Natijalar o\'qildi. Jami:', results.length);
+        res.json({ success: true, data: results });
+    } catch (error) {
+        console.error('Load error:', error);
+        res.json({ success: true, data: [] });
+    }
+});
+
+// ============= API: NATIJALARNI TOZALASH =============
+app.delete('/api/clear-results', (req, res) => {
+    try {
+        saveResults([]);
+        res.json({ success: true, message: 'Barcha natijalar o\'chirildi' });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// ============= AI API =============
 let genAI = null;
 let useMock = true;
 
@@ -30,10 +115,9 @@ try {
         console.log('⚠️ API key yo\'q, demo rejim');
     }
 } catch (error) {
-    console.log('⚠️ Gemini ulashda xato:', error.message);
+    console.log('⚠️ Gemini ulashda xato');
 }
 
-// ============= API 1: AI MASLAHAT =============
 app.post('/api/advice', async (req, res) => {
     try {
         const { weakTopics, score } = req.body;
@@ -41,7 +125,7 @@ app.post('/api/advice', async (req, res) => {
         if (useMock || !genAI) {
             let advice = "📚 O'qishni davom ettiring! ";
             if (weakTopics && weakTopics.length > 0) {
-                advice += `Zaif mavzularingiz: ${weakTopics.join(', ')}. Ushbu mavzularni qayta takrorlang.`;
+                advice += `Zaif mavzularingiz: ${weakTopics.join(', ')}.`;
             } else {
                 advice += `Siz ${score}/6 ball to'pladingiz. Yaxshi natija!`;
             }
@@ -55,12 +139,10 @@ app.post('/api/advice', async (req, res) => {
         
         res.json({ success: true, advice });
     } catch (error) {
-        console.error('AI xato:', error);
-        res.json({ success: true, advice: "📚 Zaif mavzularingizni aniqlang va ularni qayta takrorlang!" });
+        res.json({ success: true, advice: "📚 Zaif mavzularingizni qayta takrorlang!" });
     }
 });
 
-// ============= API 2: SAVOL-JAVOB =============
 app.post('/api/ask', async (req, res) => {
     try {
         const { question } = req.body;
@@ -72,7 +154,7 @@ app.post('/api/ask', async (req, res) => {
         if (useMock || !genAI) {
             return res.json({ 
                 success: true, 
-                answer: "💡 Bu savolga javob: Matematikani o'rganish davom ettiring! Savolingizni aniqroq yozib bering." 
+                answer: "💡 Bu savolga javob: Matematikani o'rganishni davom ettiring!" 
             });
         }
         
@@ -83,80 +165,15 @@ app.post('/api/ask', async (req, res) => {
         
         res.json({ success: true, answer });
     } catch (error) {
-        console.error('AI xato:', error);
-        res.json({ success: true, answer: "💡 Kechirasiz, hozircha javob bera olmayman. Keyinroq qayta urinib ko'ring." });
+        res.json({ success: true, answer: "💡 Kechirasiz, keyinroq qayta urinib ko'ring." });
     }
 });
 
-// ============= NATIJALAR (results.json) =============
-const resultsFile = path.join(__dirname, 'results.json');
-
-function loadResults() {
-    try {
-        if (fs.existsSync(resultsFile)) {
-            const data = fs.readFileSync(resultsFile, 'utf8');
-            return JSON.parse(data);
-        }
-    } catch (error) {
-        console.error('Load error:', error);
-    }
-    return [];
-}
-
-function saveResults(results) {
-    try {
-        fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
-        console.log('✅ Natijalar saqlandi:', results.length);
-    } catch (error) {
-        console.error('Save error:', error);
-    }
-}
-
-// ============= API 3: NATIJANI SAQLASH =============
-app.post('/api/save-result', (req, res) => {
-    try {
-        const { name, score, weakTopics } = req.body;
-        console.log('📝 Natija saqlanmoqda:', { name, score });
-        
-        let results = loadResults();
-        results.push({
-            name: name || 'Noma\'lum',
-            score: score || 0,
-            weakTopics: weakTopics || [],
-            date: new Date().toLocaleString('uz-UZ')
-        });
-        
-        saveResults(results);
-        res.json({ success: true, message: 'Natija saqlandi' });
-    } catch (error) {
-        console.error('Save error:', error);
-        res.json({ success: false, error: error.message });
-    }
+// ============= SAHIFALAR =============
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ============= API 4: NATIJALARNI OLISH =============
-app.get('/api/get-results', (req, res) => {
-    try {
-        const results = loadResults();
-        console.log('📊 Natijalar o\'qildi:', results.length);
-        res.json({ success: true, data: results });
-    } catch (error) {
-        console.error('Load error:', error);
-        res.json({ success: true, data: [] });
-    }
-});
-
-// ============= API 5: NATIJALARNI TOZALASH =============
-app.delete('/api/clear-results', (req, res) => {
-    try {
-        saveResults([]);
-        res.json({ success: true, message: 'Barcha natijalar o\'chirildi' });
-    } catch (error) {
-        res.json({ success: false, error: error.message });
-    }
-});
-
-// ============= BARCHA SAHIFALAR =============
 app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
@@ -165,18 +182,14 @@ app.get('/lesson.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'lesson.html'));
 });
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// ============= SERVER =============
+// ============= SERVERNI ISHGA TUSHIRISH =============
 app.listen(PORT, () => {
     console.log(`
     ════════════════════════════════════════════
     🚀 MathAI Server ishga tushdi!
     📡 Port: ${PORT}
     🤖 AI: ${useMock ? 'Demo rejim' : 'Gemini AI ulangan'}
-    📁 Admin: /admin.html
+    📁 Natijalar fayli: ${resultsFile}
     ════════════════════════════════════════════
     `);
 });
