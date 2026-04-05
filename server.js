@@ -14,135 +14,123 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ============= RESULTS.JSON FAJL =============
+// ============= RESULTS.JSON =============
 const resultsFile = path.join(__dirname, 'results.json');
 
-// Natijalarni o'qish
 function loadResults() {
     try {
         if (fs.existsSync(resultsFile)) {
-            const data = fs.readFileSync(resultsFile, 'utf8');
-            return JSON.parse(data);
+            return JSON.parse(fs.readFileSync(resultsFile, 'utf8'));
         }
-    } catch (error) {
-        console.error('Load error:', error.message);
-    }
+    } catch (error) {}
     return [];
 }
 
-// Natijalarni saqlash
 function saveResults(results) {
     try {
         fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
         console.log('✅ Natijalar saqlandi. Jami:', results.length);
         return true;
     } catch (error) {
-        console.error('Save error:', error.message);
         return false;
     }
 }
 
-// ============= API: NATIJANI SAQLASH =============
+// ============= NATIJALAR API =============
 app.post('/api/save-result', (req, res) => {
     console.log('📥 So\'rov keldi:', req.body);
-    
     try {
         const { name, score, weakTopics } = req.body;
-        
-        // Ma'lumotlarni tekshirish
-        if (!name) {
-            return res.json({ success: false, error: 'Name required' });
-        }
+        if (!name) return res.json({ success: false, error: 'Name required' });
         
         let results = loadResults();
-        
-        const newResult = {
+        results.push({
             id: Date.now(),
             name: name || 'Noma\'lum',
             score: score || 0,
             weakTopics: weakTopics || [],
             date: new Date().toLocaleString('uz-UZ')
-        };
-        
-        results.push(newResult);
+        });
         
         if (saveResults(results)) {
-            console.log('✅ Natija saqlandi:', newResult);
-            res.json({ success: true, message: 'Natija saqlandi', data: newResult });
+            res.json({ success: true, message: 'Natija saqlandi' });
         } else {
             res.json({ success: false, error: 'Faylga yozishda xatolik' });
         }
-        
     } catch (error) {
-        console.error('Save error:', error);
         res.json({ success: false, error: error.message });
     }
 });
 
-// ============= API: NATIJALARNI OLISH =============
 app.get('/api/get-results', (req, res) => {
     try {
-        const results = loadResults();
-        console.log('📊 Natijalar o\'qildi. Jami:', results.length);
-        res.json({ success: true, data: results });
+        res.json({ success: true, data: loadResults() });
     } catch (error) {
-        console.error('Load error:', error);
         res.json({ success: true, data: [] });
     }
 });
 
-// ============= API: NATIJALARNI TOZALASH =============
 app.delete('/api/clear-results', (req, res) => {
     try {
         saveResults([]);
-        res.json({ success: true, message: 'Barcha natijalar o\'chirildi' });
+        res.json({ success: true });
     } catch (error) {
-        res.json({ success: false, error: error.message });
+        res.json({ success: false });
     }
 });
 
-// ============= AI API =============
-let genAI = null;
+// ============= GROQ AI API (BEPUL VA TEZ) =============
+let groqAI = null;
 let useMock = true;
 
 try {
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.length > 10) {
-        const { GoogleGenerativeAI } = require("@google/generative-ai");
-        genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    if (process.env.GROQ_API_KEY && process.env.GROQ_API_KEY.length > 5) {
+        const Groq = require('groq-sdk');
+        groqAI = new Groq({ apiKey: process.env.GROQ_API_KEY });
         useMock = false;
-        console.log('✅ Gemini AI ulandi');
+        console.log('✅ Groq AI ulandi (bepul)');
     } else {
-        console.log('⚠️ API key yo\'q, demo rejim');
+        console.log('⚠️ GROQ_API_KEY yo\'q, demo rejim');
     }
 } catch (error) {
-    console.log('⚠️ Gemini ulashda xato');
+    console.log('⚠️ Groq ulashda xato');
 }
 
+// AI MASLAHAT
 app.post('/api/advice', async (req, res) => {
     try {
         const { weakTopics, score } = req.body;
         
-        if (useMock || !genAI) {
+        if (useMock || !groqAI) {
             let advice = "📚 O'qishni davom ettiring! ";
-            if (weakTopics && weakTopics.length > 0) {
-                advice += `Zaif mavzularingiz: ${weakTopics.join(', ')}.`;
-            } else {
-                advice += `Siz ${score}/6 ball to'pladingiz. Yaxshi natija!`;
-            }
+            advice += weakTopics?.length > 0 
+                ? `Zaif mavzularingiz: ${weakTopics.join(', ')}.`
+                : `Siz ${score}/6 ball to'pladingiz. Yaxshi natija!`;
             return res.json({ success: true, advice });
         }
         
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        const prompt = `O'quvchi matematika testida ${score}/6 ball oldi. Zaif mavzulari: ${weakTopics?.join(', ') || "Yo'q"}. Qisqa maslahat bering. O'zbek tilida.`;
-        const result = await model.generateContent(prompt);
-        const advice = result.response.text();
+        const prompt = `Siz matematika o'qituvchisisiz. O'quvchi testda ${score}/6 ball oldi. Zaif mavzulari: ${weakTopics?.join(', ') || "Yo'q"}. Qisqa maslahat bering (3-4 gap). O'zbek tilida javob bering. Maslahatni "📚" bilan boshlang.`;
         
+        const completion = await groqAI.chat.completions.create({
+            messages: [
+                { role: 'system', content: 'Siz matematika o\'qituvchisisiz. Javoblaringiz qisqa, aniq va foydali bo\'lsin.' },
+                { role: 'user', content: prompt }
+            ],
+            model: 'llama-3.3-70b-versatile',
+            temperature: 0.7,
+            max_tokens: 300,
+        });
+        
+        const advice = completion.choices[0]?.message?.content || "📚 Zaif mavzularingizni qayta takrorlang!";
         res.json({ success: true, advice });
+        
     } catch (error) {
-        res.json({ success: true, advice: "📚 Zaif mavzularingizni qayta takrorlang!" });
+        console.error('AI xato:', error);
+        res.json({ success: true, advice: "📚 Zaif mavzularingizni aniqlab, ularni qayta takrorlang!" });
     }
 });
 
+// AI SAVOL-JAVOB
 app.post('/api/ask', async (req, res) => {
     try {
         const { question } = req.body;
@@ -151,20 +139,27 @@ app.post('/api/ask', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Savol kiritilmagan' });
         }
         
-        if (useMock || !genAI) {
-            return res.json({ 
-                success: true, 
-                answer: "💡 Bu savolga javob: Matematikani o'rganishni davom ettiring!" 
-            });
+        if (useMock || !groqAI) {
+            return res.json({ success: true, answer: "💡 Matematikani o'rganishni davom ettiring! Savolingizni aniqroq yozing." });
         }
         
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        const prompt = `Siz matematika o'qituvchisisiz. Savol: ${question}. Aniq javob bering. O'zbek tilida.`;
-        const result = await model.generateContent(prompt);
-        const answer = result.response.text();
+        const prompt = `Siz matematika o'qituvchisisiz. Savol: ${question}. Aniq, tushunarli va batafsil javob bering. O'zbek tilida. Javobni "💡" bilan boshlang.`;
         
+        const completion = await groqAI.chat.completions.create({
+            messages: [
+                { role: 'system', content: 'Siz matematika o\'qituvchisisiz. Javoblaringiz aniq, tushunarli va o\'zbek tilida bo\'lsin.' },
+                { role: 'user', content: prompt }
+            ],
+            model: 'llama-3.3-70b-versatile',
+            temperature: 0.7,
+            max_tokens: 500,
+        });
+        
+        const answer = completion.choices[0]?.message?.content || "💡 Kechirasiz, hozircha javob bera olmayman.";
         res.json({ success: true, answer });
+        
     } catch (error) {
+        console.error('AI xato:', error);
         res.json({ success: true, answer: "💡 Kechirasiz, keyinroq qayta urinib ko'ring." });
     }
 });
@@ -188,8 +183,8 @@ app.listen(PORT, () => {
     ════════════════════════════════════════════
     🚀 MathAI Server ishga tushdi!
     📡 Port: ${PORT}
-    🤖 AI: ${useMock ? 'Demo rejim' : 'Gemini AI ulangan'}
-    📁 Natijalar fayli: ${resultsFile}
+    🤖 AI: ${useMock ? 'Demo rejim' : 'Groq AI (Llama 3.3) ulangan'}
+    📁 Admin panel: /admin.html
     ════════════════════════════════════════════
     `);
 });
