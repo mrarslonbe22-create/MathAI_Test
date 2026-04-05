@@ -331,3 +331,66 @@ footer a:hover {
         font-size: 28px;
     }
 }
+/* ============= AI JAVOBLAR UCHUN KO'RINARLI RANGLAR ============= */
+
+/* AI maslahat qutisi */
+#aiAdvice div, .ai-advice-box {
+    background: #1a1a2e !important;
+    color: #ffffff !important;
+    padding: 20px !important;
+    border-radius: 15px !important;
+    margin-top: 15px !important;
+    border-left: 5px solid #9C27B0 !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+}
+
+#aiAdvice div h3, .ai-advice-box h3 {
+    color: #CE93D8 !important;
+    margin-bottom: 12px !important;
+    font-size: 18px !important;
+}
+
+#aiAdvice div p, .ai-advice-box p {
+    color: #ffffff !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+}
+
+/* AI savol-javob qutisi */
+#answerResult div, .answer-box {
+    background: #1a237e !important;
+    color: #ffffff !important;
+    padding: 20px !important;
+    border-radius: 15px !important;
+    margin-top: 15px !important;
+    border-left: 5px solid #4CAF50 !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+}
+
+#answerResult div h3, .answer-box h3 {
+    color: #81C784 !important;
+    margin-bottom: 12px !important;
+    font-size: 18px !important;
+}
+
+#answerResult div p, .answer-box p {
+    color: #ffffff !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+}
+
+/* Yuklash holati (loading) */
+#aiAdvice p, #answerResult p {
+    color: #ffffff !important;
+    background: rgba(156, 39, 176, 0.3) !important;
+    padding: 15px !important;
+    border-radius: 10px !important;
+}
+
+/* Xato xabari */
+.error-box {
+    background: #c62828 !important;
+    color: white !important;
+    padding: 15px !important;
+    border-radius: 10px !important;
+}
