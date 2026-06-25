@@ -7,4 +7,109 @@
 
     <style>
       *{
-        
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+        font-family:Arial,sans-serif;
+      }
+
+      body{
+        height:100vh;
+        display:flex;
+        felx-diection:column;
+        justify-content:center;
+        align-items: center;
+        background: black;
+        overflow: hidden;
+      }
+
+    input{
+        width: 80%;
+        max-width: 500px;
+padding: 15px;
+font-size: 20px;
+border: name;
+border-radius: 10px;
+margin-bottom: 20px;
+}
+
+      button{
+        padding: 15px 30px;
+        font-size: 20px;
+        border:none;
+        border-radius: 10px;
+        cursor:pointer;
+      }
+      
+#screen{
+    position: fixed;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 8vw;
+    font-width: bold;
+    animation: zoom 2s infinite alternate;
+}
+    
+@keyframes zoom{
+    from{transform: scale(1);}
+    to{transform: scale(1.2);}
+}
+
+.rinbow{
+    background: linear-gradient(90deg,
+    red,
+    orange,
+    yellow,
+    green,
+    cyan,
+    blue,
+    violet
+    );
+beckgrauund-size:400%;
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+animation:rainbow 4s liner infinite;
+}
+@keyframes rainbow{
+    0%{background-position0:0%;}
+    100%{background-position: 400%;}
+}
+</style>
+  </head>
+  <body>
+    
+    <input
+    id="textInput"
+    placeholder="Ixtiyoriy matinni kiriting">
+    <button onclick="showText()">
+    </button>
+
+    <div id="screen">
+        <span id="output"
+        class="rinbow"></span>
+    </div>
+    <script>
+        function showText(){
+
+            const text=document.getElementById("textInpunt").value:
+
+            document.getElementById("output").innerText=text;
+
+         document.getElementById("screen").stile.display="flax";
+
+
+        }
+
+        document.getElementById("screen").onclick=function(){
+            this.stile.display="none"
+
+        }
+    </script>
+  </body>
+</html>
