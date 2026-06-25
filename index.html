@@ -1,115 +1,132 @@
 <!DOCTYPE html>
-<html lang+"uz">
-  <head>
-    <meta charset="UTF-8">
-      <meta name="viewport"contnt="width=device-width,initilal-scale=1.0">
-    <title>Text Animator</title>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Animator</title>
 
-    <style>
-      *{
-        margin:0;
-        padding:0;
-        box-sizing:border-box;
-        font-family:Arial,sans-serif;
-      }
-
-      body{
-        height:100vh;
-        display:flex;
-        felx-diection:column;
-        justify-content:center;
-        align-items: center;
-        background: black;
-        overflow: hidden;
-      }
-
-    input{
-        width: 80%;
-        max-width: 500px;
-padding: 15px;
-font-size: 20px;
-border: name;
-border-radius: 10px;
-margin-bottom: 20px;
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
 }
 
-      button{
-        padding: 15px 30px;
-        font-size: 20px;
-        border:none;
-        border-radius: 10px;
-        cursor:pointer;
-      }
-      
+body{
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+background:black;
+overflow:hidden;
+}
+
+input{
+width:80%;
+max-width:500px;
+padding:15px;
+font-size:20px;
+border:none;
+border-radius:10px;
+margin-bottom:20px;
+}
+
+button{
+padding:15px 30px;
+font-size:20px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+
 #screen{
-    position: fixed;
-    top:0;
-    left:0;
-    width: 100%;
-    height: 100%;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    font-size: 8vw;
-    font-width: bold;
-    animation: zoom 2s infinite alternate;
-}
-    
-@keyframes zoom{
-    from{transform: scale(1);}
-    to{transform: scale(1.2);}
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+display:none;
+justify-content:center;
+align-items:center;
+text-align:center;
+font-size:8vw;
+font-weight:bold;
+animation:zoom 2s infinite alternate;
 }
 
-.rinbow{
-    background: linear-gradient(90deg,
-    red,
-    orange,
-    yellow,
-    green,
-    cyan,
-    blue,
-    violet
-    );
-beckgrauund-size:400%;
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-animation:rainbow 4s liner infinite;
+@keyframes zoom{
+from{transform:scale(1);}
+to{transform:scale(1.2);}
 }
+
+.rainbow{
+background:linear-gradient(
+90deg,
+red,
+orange,
+yellow,
+green,
+cyan,
+blue,
+violet
+);
+background-size:400%;
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+animation:rainbow 4s linear infinite;
+}
+
 @keyframes rainbow{
-    0%{background-position0:0%;}
-    100%{background-position: 400%;}
+0%{background-position:0%;}
+100%{background-position:400%;}
 }
 </style>
-  </head>
-  <body>
-    
-    <input
-    id="textInput"
-    placeholder="Ixtiyoriy matinni kiriting">
-    <button onclick="showText()">
-    </button>
+</head>
 
-    <div id="screen">
-        <span id="output"
-        class="rinbow"></span>
-    </div>
-    <script>
-        function showText(){
+<body>
 
-            const text=document.getElementById("textInpunt").value:
+<input
+id="textInput"
+placeholder="Matn kiriting">
 
-            document.getElementById("output").innerText=text;
+<button onclick="showText()">
+Ko'rsatish
+</button>
 
-         document.getElementById("screen").stile.display="flax";
+<div id="screen">
+<span id="output" class="rainbow"></span>
+</div>
 
+<script>
 
-        }
+function showText(){
 
-        document.getElementById("screen").onclick=function(){
-            this.stile.display="none"
+const text =
+document.getElementById(
+"textInput"
+).value;
 
-        }
-    </script>
-  </body>
+document.getElementById(
+"output"
+).innerText = text;
+
+document.getElementById(
+"screen"
+).style.display = "flex";
+
+}
+
+document.getElementById(
+"screen"
+).onclick = function(){
+
+this.style.display = "none";
+
+}
+
+</script>
+
+</body>
 </html>
